@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hologram Fan Manager</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --primary: #3b82f6;
+            --accent: #8b5cf6;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: #334155;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Outfit', 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 0.75rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .file-item {
+            display: grid;
+            grid-template-columns: 2fr 110px 110px 170px 100px auto;
+            gap: 1.5rem;
+            align-items: center;
+            padding: 1.25rem;
+            background: #111827;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            transition: border-color 0.2s;
+        }
+
+        .file-item:hover {
+            border-color: var(--primary);
+        }
+
+        .file-info h4 {
+            margin: 0 0 0.25rem 0;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .file-info p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        input, select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 0.4rem;
+            font-size: 0.85rem;
+        }
+
+        button {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-tab {
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            padding: 0.6rem 1.5rem;
+        }
+        .btn-tab.active {
+            background: var(--surface);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        .btn-generate {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .badge-video { background: #1e3a8a; color: #93c5fd; }
+        .badge-image { background: #064e3b; color: #6ee7b7; }
+        .badge-error { background: rgba(239, 68, 68, 0.15); color: #fecaca; border: 1px solid rgba(239, 68, 68, 0.25); }
+        .badge-included { background: rgba(16, 185, 129, 0.14); color: #a7f3d0; border: 1px solid rgba(16, 185, 129, 0.24); }
+        .badge-skipped { background: rgba(245, 158, 11, 0.14); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.24); }
+        .notice {
+            margin-top: 1rem;
+            padding: 0.9rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            background: rgba(245, 158, 11, 0.08);
+            color: #fde68a;
+            font-size: 0.88rem;
+        }
+
+        /* Progress Bar Styles */
+        .progress-container {
+            width: 100%;
+            background-color: var(--bg);
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .task-item {
+            background: #111827;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .task-files {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            color: var(--text);
+            padding: 0.75rem 1.5rem;
+            border-radius: 99px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 1000;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast-icon {
+            color: var(--success);
+            font-size: 1.2rem;
+        }
+
+    </style>
+
+</head>
+<body>
+
+<div id="toast" class="toast">
+    <span class="toast-icon">✓</span>
+    <span id="toastMsg">File Updated</span>
+</div>
+
+<div class="container">
+
+    <div class="header">
+        <div>
+            <h1>Hologram Fan Manager Pro</h1>
+            <p style="color: var(--text-dim); margin-top: 0.25rem;">Manage your Playlist and Device Settings</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button class="btn-tab active" id="tabFileGen" onclick="switchTab('filegen')">File Generator</button>
+            <button class="btn-tab" id="tabPlaylist" onclick="switchTab('playlist')">Playlist</button>
+            <button class="btn-tab" id="tabConfig" onclick="switchTab('config')">Device Settings</button>
+            <button class="btn-primary" onclick="loadFiles()">Refresh</button>
+        </div>
+    </div>
+
+    <!-- Playlist Tab Content -->
+    <div id="sectionPlaylist" style="display: none;">
+        <div class="card">
+            <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
+                <h3 style="margin: 0;">Click or Drop Local Media Files</h3>
+                <p style="color: var(--text-dim); font-size: 0.9rem;">Files will be uploaded to your local 'media' folder</p>
+                <input type="file" id="fileInput" multiple style="display: none;" onchange="handleUpload(event)">
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top: 0; margin-bottom: 1.5rem;">Current Playlist Entries</h3>
+            <div class="notice" id="genNotice">
+                Generator settings are loading...
+            </div>
+            <div style="display:flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+                <div style="display:flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                    <button class="btn-primary" onclick="document.getElementById('refLisInput').click()">Load Existing FTL.LIS</button>
+                    <input type="file" id="refLisInput" accept=".lis,.LIS" style="display:none;" onchange="uploadReferenceLis(event)">
+                    <button class="btn-danger" onclick="clearReferenceLis()">Clear Reference</button>
+                    <div style="display:flex; gap: 0.5rem; align-items: center; color: var(--text-dim); font-size: 0.9rem;">
+                        <input type="checkbox" id="genMergeMode" checked onchange="saveGenerator()">
+                        <label for="genMergeMode" style="margin:0;">Merge into reference (append new)</label>
+                    </div>
+                </div>
+                <div id="refLisStatus" style="color: var(--text-dim); font-size: 0.85rem;">Reference: (loading)</div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Target Storage Directory</label>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <input type="text" id="genTargetDir" placeholder="e.g. C:\HologramFiles" style="flex: 1; min-width: 200px;">
+                        <button class="btn-primary" style="width: 100px;" onclick="browseTargetDir()">Browse...</button>
+                        <button class="btn-primary" style="width: 120px;" onclick="saveGenerator()">Update Path</button>
+                    </div>
+
+                    <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.4rem;">
+                        Converted files go to <code>/media</code> and playlist to <code>FTL.LIS</code> inside this folder.
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 1rem; margin-bottom: 2rem; align-items: end;">
+
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Max Entries</label>
+                    <input type="number" id="genMaxEntries" value="0" min="0" step="1">
+                </div>
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Header Style</label>
+                    <select id="genHeaderStyle">
+                        <option value="count_fc">count_fc</option>
+                        <option value="used_len">used_len</option>
+                    </select>
+                </div>
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Header Used Slots</label>
+                    <input type="number" id="genHeaderUsedSlots" value="7" min="1" step="1">
+                </div>
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Total Slots</label>
+                    <input type="number" id="genRecordCount" value="100" min="1" step="1">
+                </div>
+                <div>
+                    <button class="btn-primary" onclick="saveGenerator()">Save</button>
+                </div>
+            </div>
+            <div id="fileList" class="file-grid">
+                <!-- Items injected here -->
+            </div>
+        </div>
+
+        <div class="card" style="text-align: center;">
+            <button class="btn-generate" onclick="generateAndDownload()">
+                Sync & Generate FTL.LIS
+            </button>
+        </div>
+    </div>
+
+    <!-- File Generator Tab Content -->
+    <div id="sectionFileGen">
+        <div class="card">
+            <h3>Media Conversion (MP4 / Images → FTLV)</h3>
+            <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1rem;">
+                Select files to convert them into fan-playable <strong>FTLV</strong> format.
+            </p>
+
+            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-end;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dim);">Visual Quality (JPEG)</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="range" id="convQuality" min="10" max="100" value="85" style="width: 150px;" oninput="document.getElementById('qVal').innerText = this.value">
+                        <span id="qVal" style="font-weight: bold; min-width: 30px;">85</span>
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dim);">Playback Speed (FPS)</label>
+                    <select id="convFps" style="background: #222; color: #fff; border: 1px solid #444; padding: 5px 10px; border-radius: 5px;">
+                        <option value="10">10 FPS</option>
+                        <option value="15">15 FPS</option>
+                        <option value="20" selected>20 FPS</option>
+                    </select>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--primary); max-width: 200px;">
+                    Higher quality/FPS = Larger file size and better visuals.
+                </div>
+            </div>
+
+            
+            <div class="upload-zone" id="genDropZone" onclick="document.getElementById('mediaInput').click()">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🎬</div>
+                <h3 style="margin: 0;">Click or Drop Files to Select</h3>
+                <p style="color: var(--text-dim); font-size: 0.9rem;">Supports MP4, JPG, PNG, GIF</p>
+                <input type="file" id="mediaInput" accept="image/*,video/mp4" multiple style="display: none;" onchange="handleMediaSelect(event)">
+            </div>
+
+            <div id="selectionArea" style="display: none; margin-top: 1.5rem;">
+                <h4 style="margin-bottom: 1rem;">Pending Files</h4>
+                <div id="selectedFilesList" class="task-list" style="margin-bottom: 1.5rem;">
+                    <!-- Selected files here -->
+                </div>
+                <button class="btn-generate" id="btnStartConversion" onclick="startConversion()">
+                    Start Conversion (0 files)
+                </button>
+            </div>
+        </div>
+
+        <div class="card" id="historyCard" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Conversion History</h3>
+                <button class="btn-primary" onclick="loadTasks()">Refresh History</button>
+            </div>
+            <div id="taskList" class="task-list">
+                <!-- Tasks here -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Config Tab Content -->
+    <div id="sectionConfig" style="display: none;">
+        <div class="card">
+            <h3>Device Global Configuration</h3>
+            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1.5rem;">
+                These settings are saved directly to <strong>config.ini</strong> on the SD card.
+            </p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div class="input-group">
+                    <label>Fan Model (Read-Only)</label>
+                    <input type="text" id="cfgModel" readonly style="opacity: 0.7;">
+                </div>
+                <div class="input-group">
+                    <label>Device Name (Broadcast Name)</label>
+                    <input type="text" id="cfgDeviceName" placeholder="e.g. MyHoloFan">
+                </div>
+                <div class="input-group">
+                    <label>WiFi SSID</label>
+                    <input type="text" id="cfgSSID" placeholder="WiFi SSID">
+                </div>
+                <div class="input-group">
+                    <label>WiFi Password</label>
+                    <input type="password" id="cfgPassword" placeholder="Password">
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <button class="btn-primary" style="width: 200px;" onclick="saveConfig()">Save Device Settings</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const selectedFiles = new Set();
+
+    async function loadGenerator() {
+        const res = await fetch('/api/generator');
+        const cfg = await res.json();
+
+        document.getElementById('genMaxEntries').value = cfg.max_entries ?? 0;
+        document.getElementById('genHeaderStyle').value = cfg.header_style ?? 'count_fc';
+        document.getElementById('genHeaderUsedSlots').value = cfg.header_used_slots ?? 7;
+        document.getElementById('genRecordCount').value = cfg.record_count ?? 100;
+        document.getElementById('genMergeMode').checked = cfg.merge_mode ?? true;
+        document.getElementById('genTargetDir').value = cfg.target_directory ?? '';
+
+
+        const headerText = `${cfg.header_style}:${cfg.header_used_slots}`;
+        const maxText = cfg.header_style === 'count_fc' ? 'auto (all enabled)' : (cfg.max_entries ? `${cfg.max_entries}` : 'all');
+        document.getElementById('genNotice').textContent =
+            `Generator: maxEntries=${maxText}, header=${headerText}, totalSlots=${cfg.record_count}. ` +
+            `Recommended: header_style=count_fc for most fans.`;
+
+        const maxInput = document.getElementById('genMaxEntries');
+        if (cfg.header_style === 'count_fc') {
+            maxInput.disabled = true;
+            maxInput.title = 'count_fc uses all enabled files automatically';
+        } else {
+            maxInput.disabled = false;
+            maxInput.title = '';
+        }
+    }
+
+    async function browseTargetDir() {
+        try {
+            const res = await fetch('/api/browse');
+            const data = await res.json();
+            if (data.path) {
+                document.getElementById('genTargetDir').value = data.path;
+                // Auto-save after browsing
+                await saveGenerator();
+            } else if (data.error) {
+                alert('Browse failed: ' + data.error);
+            }
+        } catch (e) {
+            alert('Browse failed: ' + e);
+        }
+    }
+
+    async function saveGenerator() {
+
+        const headerStyle = document.getElementById('genHeaderStyle').value;
+        const payload = {
+            max_entries: headerStyle === 'count_fc' ? 0 : parseInt(document.getElementById('genMaxEntries').value || '0', 10),
+            header_style: headerStyle,
+            header_used_slots: parseInt(document.getElementById('genHeaderUsedSlots').value || '7', 10),
+            record_count: parseInt(document.getElementById('genRecordCount').value || '100', 10),
+            merge_mode: document.getElementById('genMergeMode').checked,
+            target_directory: document.getElementById('genTargetDir').value.trim()
+        };
+
+        const res = await fetch('/api/generator', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            alert('Failed to save generator settings');
+            return;
+        }
+        await loadGenerator();
+        await loadFiles();
+        alert('Generator settings saved');
+    }
+
+    async function loadFiles() {
+        const res = await fetch('/api/files');
+        const files = await res.json();
+        syncGeneratorMaxEntries(files);
+        syncSelection(files);
+        renderFileList(files);
+    }
+
+    async function loadReferenceLisStatus() {
+        try {
+            const res = await fetch('/api/reference_lis');
+            const info = await res.json();
+            if (!res.ok) {
+                document.getElementById('refLisStatus').textContent = `Reference: error (${info.error || 'unknown'})`;
+                return;
+            }
+            if (!info.exists) {
+                document.getElementById('refLisStatus').textContent = `Reference: none (${info.path})`;
+                return;
+            }
+            const count = info.entry_count ?? '?';
+            const style = info.header_style ?? 'unknown';
+            document.getElementById('refLisStatus').textContent = `Reference: ${count} entries (${style})`;
+        } catch (e) {
+            document.getElementById('refLisStatus').textContent = 'Reference: (failed to load)';
+        }
+    }
+
+    async function uploadReferenceLis(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const form = new FormData();
+        form.append('file', file);
+        const res = await fetch('/api/reference_lis', { method: 'POST', body: form });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            alert(body.error || 'Failed to load reference');
+            return;
+        }
+        await loadReferenceLisStatus();
+        await loadFiles();
+        alert('Reference FTL.LIS loaded');
+    }
+
+    async function clearReferenceLis() {
+        const res = await fetch('/api/reference_lis/clear', { method: 'POST' });
+        if (!res.ok) {
+            alert('Failed to clear reference');
+            return;
+        }
+        await loadReferenceLisStatus();
+        await loadFiles();
+    }
+
+    function syncSelection(files) {
+        const existing = new Set(files.map(f => f.fileName));
+        for (const name of Array.from(selectedFiles)) {
+            if (!existing.has(name)) selectedFiles.delete(name);
+        }
+    }
+
+    function syncGeneratorMaxEntries(files) {
+        const headerStyle = document.getElementById('genHeaderStyle')?.value || 'count_fc';
+        const maxInput = document.getElementById('genMaxEntries');
+        if (!maxInput) return;
+
+        if (headerStyle === 'count_fc') {
+            const enabledCount = files.filter(f => (f.enabled === true) && !f.parseError).length;
+            maxInput.value = enabledCount;
+            maxInput.disabled = true;
+            maxInput.title = 'count_fc uses all enabled files automatically';
+        } else {
+            maxInput.disabled = false;
+            maxInput.title = '';
+        }
+    }
+
+    function renderFileList(files) {
+        const container = document.getElementById('fileList');
+        if (files.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color: var(--text-dim);">No files in folder.</p>';
+            return;
+        }
+
+        const selectedCount = selectedFiles.size;
+        const bar = `
+            <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 0.9rem; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,0.02);">
+                <div style="color: var(--text-dim); font-size: 0.9rem;">
+                    Selected: <strong style="color: var(--text);">${selectedCount}</strong>
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                    <button class="btn-primary" onclick="selectAllVisible()">Select all</button>
+                    <button class="btn-primary" onclick="clearSelection()">Clear</button>
+                    <button class="btn-danger" onclick="deleteSelected()" ${selectedCount === 0 ? 'disabled style=\"opacity:0.5; cursor:not-allowed;\"' : ''}>Remove selected</button>
+                    <button class="btn-danger" onclick="deleteAll()">Remove all</button>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = files.map(file => `
+            <div class="file-item">
+                <div class="file-info">
+                    <div style="display:flex; align-items:center; gap: 0.75rem;">
+                        <input type="checkbox" ${selectedFiles.has(file.fileName) ? 'checked' : ''} onchange="toggleSelect('${file.fileName}', this.checked)">
+                        <h4 style="margin:0;">${file.fileName}</h4>
+                    </div>
+                    <span class="status-badge ${file.parseError ? 'badge-error' : (file.willBeIncluded ? 'badge-included' : 'badge-skipped')}">
+                        ${file.parseError ? 'INVALID' : (file.willBeIncluded ? 'INCLUDED' : 'SKIPPED')}
+                    </span>
+                    <p style="margin-top: 0.4rem;">
+                        ${file.parseError ? ('Error: ' + file.parseError) : ('v1=' + (file.v1 ?? 0) + ', v2=' + (file.v2 ?? 0) + ', max=' + (file.maxEntries ?? 0) + ', header=' + (file.headerStyle ?? 'count_fc') + ':' + (file.headerUsedSlots ?? 0))}
+                    </p>
+                </div>
+                <div class="input-group">
+                    <label>V1</label>
+                    <input type="number" value="${file.v1 ?? 0}" disabled>
+                </div>
+                <div class="input-group">
+                    <label>V2</label>
+                    <input type="number" value="${file.v2 ?? 0}" disabled>
+                </div>
+                <div class="input-group">
+                    <label>CRC (Hex8)</label>
+                    <input type="text" value="${file.crc ?? ''}" maxlength="8" onchange="updateSetting('${file.fileName}', 'crc', this.value)">
+                </div>
+                <div class="input-group">
+                    <label>Enabled</label>
+                    <input type="checkbox" ${file.enabled ? 'checked' : ''} onchange="updateSetting('${file.fileName}', 'enabled', this.checked)">
+                </div>
+                <div>
+                    <button class="btn-danger" onclick="deleteFile('${file.fileName}')">Remove</button>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = bar + container.innerHTML;
+    }
+
+    function toggleSelect(fileName, checked) {
+        if (checked) selectedFiles.add(fileName);
+        else selectedFiles.delete(fileName);
+        loadFiles();
+    }
+
+    function selectAllVisible() {
+        const nodes = document.querySelectorAll('#fileList .file-item .file-info h4');
+        nodes.forEach(n => selectedFiles.add(n.textContent.trim()));
+        loadFiles();
+    }
+
+    function clearSelection() {
+        selectedFiles.clear();
+        loadFiles();
+    }
+
+    async function deleteSelected() {
+        const names = Array.from(selectedFiles);
+        if (names.length === 0) return;
+        if (!confirm(`Remove ${names.length} selected file(s) from folder?`)) return;
+        const res = await fetch('/api/delete_many', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ fileNames: names })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert(err.error || 'Delete failed');
+            return;
+        }
+        selectedFiles.clear();
+        loadFiles();
+    }
+
+    async function deleteAll() {
+        if (!confirm('Remove ALL files from folder?')) return;
+        const res = await fetch('/api/delete_all', { method: 'POST' });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert(err.error || 'Delete all failed');
+            return;
+        }
+        selectedFiles.clear();
+        loadFiles();
+    }
+
+    async function updateSetting(fileName, key, value) {
+        const payload = { fileName };
+        payload[key] = value;
+        const res = await fetch('/api/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert(err.error || 'Update failed');
+            return;
+        }
+        loadFiles();
+    }
+
+    // Simplified and robust Drag and Drop Logic
+    const dropZone = document.getElementById('dropZone');
+    
+    // Standard listeners for drag states
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.style.borderColor = 'var(--primary)';
+            dropZone.style.background = 'rgba(59, 130, 246, 0.1)';
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.style.borderColor = 'var(--border)';
+            dropZone.style.background = 'rgba(255,255,255,0.02)';
+        }, false);
+    });
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        let dt = e.dataTransfer;
+        let files = dt.files;
+        if (files.length > 0) {
+            uploadFiles(files);
+        }
+    }
+
+    async function handleUpload(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            await uploadFiles(files);
+        }
+    }
+
+    async function uploadFiles(files) {
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
+        }
+
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                loadFiles();
+            } else {
+                alert("Upload failed. Check if the server is running.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error connecting to server.");
+        }
+    }
+
+    async function deleteFile(fileName) {
+        if (!confirm(`Remove ${fileName} from playlist and folder?`)) return;
+        await fetch('/api/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ fileName })
+        });
+        loadFiles();
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        document.getElementById('toastMsg').innerText = msg;
+        t.classList.add('visible');
+        setTimeout(() => t.classList.remove('visible'), 3000);
+    }
+
+    async function generateAndDownload() {
+        const btn = document.querySelector('.btn-generate');
+        const oldText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Updating FTL.LIS...";
+
+        try {
+            const res = await fetch('/api/generate', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                showToast(data.message || "FTL.LIS Generated successfully!");
+                loadFiles(); // Refresh the list
+            } else {
+                alert(data.error || "Failed to generate playlist");
+            }
+        } catch (err) {
+            alert("Error connecting to server");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = oldText;
+        }
+    }
+
+
+    // Tab Switching
+    function switchTab(tab) {
+        document.getElementById('sectionPlaylist').style.display = tab === 'playlist' ? 'block' : 'none';
+        document.getElementById('sectionFileGen').style.display = tab === 'filegen' ? 'block' : 'none';
+        document.getElementById('sectionConfig').style.display = tab === 'config' ? 'block' : 'none';
+        
+        document.getElementById('tabPlaylist').classList.toggle('active', tab === 'playlist');
+        document.getElementById('tabFileGen').classList.toggle('active', tab === 'filegen');
+        document.getElementById('tabConfig').classList.toggle('active', tab === 'config');
+
+        if (tab === 'config') loadConfig();
+        if (tab === 'filegen') {
+            loadTasks();
+            autoRefreshTasks();
+        } else {
+            stopAutoRefresh();
+        }
+    }
+
+    let pendingMediaFiles = [];
+
+    function handleMediaSelect(e) {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        
+        pendingMediaFiles = [...pendingMediaFiles, ...files];
+        renderSelectionList();
+    }
+
+    function renderSelectionList() {
+        const area = document.getElementById('selectionArea');
+        const list = document.getElementById('selectedFilesList');
+        const btn = document.getElementById('btnStartConversion');
+        
+        if (pendingMediaFiles.length === 0) {
+            area.style.display = 'none';
+            return;
+        }
+
+        area.style.display = 'block';
+        list.innerHTML = pendingMediaFiles.map((f, i) => `
+            <div class="task-item" style="padding: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.9rem;">${f.name} (${(f.size/1024/1024).toFixed(2)} MB)</span>
+                    <button class="btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;" onclick="removePending(${i})">Remove</button>
+                </div>
+            </div>
+        `).join('');
+
+        btn.textContent = `Start Conversion (${pendingMediaFiles.length} files)`;
+    }
+
+    function removePending(index) {
+        pendingMediaFiles.splice(index, 1);
+        renderSelectionList();
+    }
+
+    async function startConversion() {
+        if (pendingMediaFiles.length === 0) return;
+        
+        const btn = document.getElementById('btnStartConversion');
+        btn.disabled = true;
+        btn.textContent = "Uploading...";
+
+        const formData = new FormData();
+        pendingMediaFiles.forEach(f => formData.append('file', f));
+        
+        formData.append('quality', document.getElementById('convQuality').value);
+        formData.append('fps', document.getElementById('convFps').value);
+
+        try {
+            const res = await fetch('/api/convert_media_async', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                pendingMediaFiles = [];
+                renderSelectionList();
+                document.getElementById('historyCard').style.display = 'block';
+                loadTasks();
+            } else {
+                alert(data.error || "Failed to start conversion");
+            }
+        } catch (err) {
+            alert("Error connecting to server");
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    let taskRefreshInterval = null;
+
+    function autoRefreshTasks() {
+        if (taskRefreshInterval) return;
+        taskRefreshInterval = setInterval(loadTasks, 2000);
+    }
+
+    function stopAutoRefresh() {
+        if (taskRefreshInterval) {
+            clearInterval(taskRefreshInterval);
+            taskRefreshInterval = null;
+        }
+    }
+
+    async function loadTasks() {
+        try {
+            const res = await fetch('/api/tasks');
+            const tasks = await res.json();
+            
+            const list = document.getElementById('taskList');
+            if (tasks.length > 0) {
+                document.getElementById('historyCard').style.display = 'block';
+            } else {
+                return;
+            }
+
+            list.innerHTML = tasks.map(task => {
+                const isProcessing = task.status === 'processing';
+                const isDone = task.status === 'done';
+                const totalFiles = task.files ? task.files.length : 0;
+                const statusColor = isDone ? 'var(--success)' : (isProcessing ? 'var(--primary)' : 'var(--text-dim)');
+                
+                return `
+                    <div class="task-item">
+                        <div class="task-header">
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">Task ${task.id.substring(0,8)}</span>
+                            <span class="status-badge" style="background: ${statusColor}22; color: ${statusColor};">
+                                ${task.status.toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="task-files">
+                            Files: ${task.files.map(f => f.original).join(', ')}
+                        </div>
+                        ${isProcessing || isDone ? `
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: ${task.progress}%"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 0.25rem;">
+                                <span>Progress: ${task.progress}%</span>
+                                <span>${task.okCount} Done, ${task.failCount} Failed</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // If tasks are processing, keep refreshing. If all done, we could slow down but interval is fine.
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function loadConfig() {
+        try {
+            const res = await fetch('/api/config');
+            if (res.ok) {
+                const cfg = await res.json();
+                document.getElementById('cfgModel').value = cfg.model;
+                document.getElementById('cfgSSID').value = cfg.ssid;
+                document.getElementById('cfgPassword').value = cfg.password;
+                document.getElementById('cfgDeviceName').value = cfg.deviceName;
+            }
+        } catch (e) { console.error("Could not load config", e); }
+    }
+
+    async function saveConfig() {
+        const data = {
+            ssid: document.getElementById('cfgSSID').value,
+            password: document.getElementById('cfgPassword').value,
+            deviceName: document.getElementById('cfgDeviceName').value
+        };
+        const res = await fetch('/api/config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        if (res.ok) alert("Device settings saved to config.ini!");
+    }
+
+    // Initial Load
+    loadGenerator();
+    loadReferenceLisStatus();
+    loadFiles();
+    switchTab('filegen');
+</script>
+
+</body>
+</html>
