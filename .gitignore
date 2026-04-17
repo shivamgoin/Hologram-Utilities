@@ -1,0 +1,48 @@
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Local IDE / OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs and temp files
+*.log
+*.bak
+
+# Project runtime data
+FTL.LIS
+src/FTL.LIS
+settings.json
+src/settings.json
+src/reference/FTL.LIS
+src/media/
+src/0001-4903
+
+# Binaries and downloaded dependencies
+tools/ffmpeg/ffmpeg
+tools/ffmpeg/ffmpeg.exe
+
+# Build artifacts
+share/
