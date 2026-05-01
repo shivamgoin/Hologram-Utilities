@@ -283,8 +283,9 @@ def convert_mp4_to_ftlv(
             a_size = len(audio_data)
             a_pad = _pad4(a_size)
 
-            # 2. Add Audio Index Entry (Many fans expect Audio at index 0)
-            # We'll write audio after video, but we need the offset.
+            # 2. Determine layout offsets.
+            # Device reference files commonly list ALL video frames first in the index table,
+            # then put the audio entry LAST. We follow that ordering to avoid playback glitches.
             video_start_offset = out_f.tell()
             
             # Temporary storage for frames
@@ -296,11 +297,8 @@ def convert_mp4_to_ftlv(
             # Now we know video size
             video_size_total = sum(len(d) + _pad4(len(d)) for d in video_data_list)
             audio_start_offset = video_start_offset + video_size_total
-            
-            # Add AUDIO entry at index 0
-            offsets_sizes.append((audio_start_offset, a_size))
 
-            # 3. Add Video index entries (starting from index 1)
+            # 3. Add Video index entries first (frame 0..N-1)
             current_off = video_start_offset
             for data in video_data_list:
                 size = len(data)
@@ -319,6 +317,9 @@ def convert_mp4_to_ftlv(
             if a_pad:
                 out_f.write(b"\x00" * a_pad)
             audio_size_with_pad = a_size + a_pad
+
+            # Audio entry LAST in the index table (after all video frames).
+            offsets_sizes.append((audio_start_offset, a_size))
 
             # 5. Index table
             index_offset = out_f.tell()

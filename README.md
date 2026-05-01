@@ -4,10 +4,22 @@ This project includes a small Flask app for managing playlist files plus utiliti
 
 ## Starting the app
 
-- Windows: run `start-windows.bat`
-- macOS: run `start-mac.command`
+- Windows: run `tools/win/start-windows.bat`
+- macOS: run `tools/mac/start-mac.command`
 
 Both launchers create or reuse `.venv`, install dependencies, start the local server, and open `http://127.0.0.1:5000/` in your browser.
+
+## Platform folders
+
+- Windows scripts are in `tools/win`
+- macOS scripts are in `tools/mac`
+
+Packaging scripts:
+- Windows package: `tools/win/package_share.bat`
+- macOS package: `tools/mac/package_share.command`
+
+Either packaging script creates the same share package in `share/hologram_manager.zip`.
+The package includes both `tools/win` and `tools/mac` launchers so it can be used on either platform.
 
 ## File Generator (MP4 -> FTLV)
 

@@ -1,14 +1,7 @@
 @echo off
 setlocal enableextensions
-
-if /I not "%HOLOGRAM_MANAGER_NO_UAC%"=="1" (
-    net session >nul 2>&1
-    if %errorlevel% neq 0 (
-        echo Requesting Administrator permission...
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -WorkingDirectory '%~dp0' -Verb RunAs" >nul 2>&1
-        exit /b
-    )
-)
+rem This launcher does not require Administrator privileges.
+rem Avoid UAC prompts so the shared package works on locked-down Windows machines.
 
 for %%I in ("%~dp0..\..") do set "REPO_ROOT=%%~fI"
 cd /d "%REPO_ROOT%"
