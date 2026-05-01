@@ -856,7 +856,7 @@
             background: #000;
         }
 
-        /* Viewport preview mode (square vs circle) applied to Player and upload zones */
+        /* Viewport preview mode (square vs circle) applied to selected targets only */
         .viewport-glyph {
             width: 12px;
             height: 12px;
@@ -866,15 +866,15 @@
         }
         html[data-viewport="circle"] .viewport-glyph { border-radius: 999px; }
 
-        html[data-viewport="circle"] .player-screen img {
+        html[data-viewport="circle"] .viewport-mask-image {
             aspect-ratio: 1 / 1;
             object-fit: cover;
             border-radius: 999px;
         }
-        html[data-viewport="circle"] .player-placeholder {
+        html[data-viewport="circle"] .viewport-mask-placeholder {
             clip-path: circle(48% at 50% 50%);
         }
-        html[data-viewport="circle"] .upload-zone {
+        html[data-viewport="circle"] .viewport-mask-zone {
             max-width: 720px;
             margin-left: auto;
             margin-right: auto;
@@ -884,7 +884,7 @@
             place-items: center;
             padding: 2rem;
         }
-        html[data-viewport="circle"] .upload-zone > * {
+        html[data-viewport="circle"] .viewport-mask-zone > * {
             max-width: 520px;
         }
         .player-controls {
@@ -1049,10 +1049,6 @@
                 <button class="btn-secondary" id="topbarUploadBtn" onclick="triggerTopbarUpload()" style="display:none;"><img class="icon" src="/static/icons/upload.svg" alt="">Upload Files</button>
                 <button class="btn-secondary" id="topbarUploadFolderBtn" onclick="triggerTopbarUploadFolder()" style="display:none;"><img class="icon" src="/static/icons/folder-upload.svg" alt="">Upload Folder</button>
                 <button class="btn-secondary" onclick="clearCurrentScreen()"><img class="icon" src="/static/icons/clear.svg" alt="">Clear Screen</button>
-                <button class="btn-secondary" id="viewportToggleBtn" onclick="toggleViewportMode()" title="Toggle viewport preview (circle/square)">
-                    <span class="viewport-glyph" aria-hidden="true"></span>
-                    <span id="viewportToggleText">Square</span>
-                </button>
                 <button class="btn-secondary" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark mode"><img class="icon" id="themeToggleIcon" src="/static/icons/moon.svg" alt=""><span id="themeToggleText">Dark</span></button>
                 <button class="btn-primary" onclick="refreshCurrentView()"><img class="icon" src="/static/icons/refresh.svg" alt="">Refresh</button>
             </div>
@@ -1071,9 +1067,14 @@
                     </p>
                 </div>
                 <div class="section-head-actions">
-                    <button class="btn-secondary" onclick="playlistAddFiles()"><img class="icon" src="/static/icons/upload.svg" alt="">Open Files</button>
+                    <button class="btn-secondary" onclick="document.getElementById('playlistFtlvFilesInput')?.click()"><img class="icon" src="/static/icons/upload.svg" alt="">Open Files</button>
+                    <input type="file" id="playlistFtlvFilesInput" multiple style="display:none;" onchange="playlistAddFilesUpload(event)">
                     <button class="btn-secondary" onclick="document.getElementById('playlistRefLisInput').click()"><img class="icon" src="/static/icons/upload.svg" alt="">Load FTL.LIS</button>
                     <input type="file" id="playlistRefLisInput" accept=".lis,.LIS" style="display:none;" onchange="playlistLoadReferenceUpload(event)">
+<!--                    <button class="btn-secondary" type="button" onclick="toggleViewportMode()" title="Viewport preview (circle/square)">-->
+<!--                        <span class="viewport-glyph" aria-hidden="true"></span>-->
+<!--                        <span class="viewport-toggle-label">Square</span>-->
+<!--                    </button>-->
                     <button class="btn-secondary" id="btnPlaylistAdvanced" onclick="togglePlaylistAdvanced()"><img class="icon" src="/static/icons/tune.svg" alt="">Advanced</button>
                     <button class="btn-secondary" onclick="playlistClear()"><img class="icon" src="/static/icons/clear.svg" alt="">Clear List</button>
                     <button class="btn-primary" onclick="playlistSyncGenerate()"><img class="icon" src="/static/icons/generator.svg" alt="">Sync & Generate</button>
@@ -1163,6 +1164,12 @@
                 <div class="section-head-actions">
                     <button class="btn-secondary" type="button" id="btnFileGenSettings" onclick="toggleFileGenSettings()"><img class="icon" src="/static/icons/tune.svg" alt="">Settings</button>
                     <button class="btn-secondary" type="button" onclick="browseTargetDirForFileGen()"><img class="icon" src="/static/icons/folder-upload.svg" alt="">Browse Folder</button>
+<!--                    <button class="btn-secondary" type="button" onclick="toggleViewportMode()" title="Viewport preview (circle/square)">
+                        <span class="viewport-glyph" aria-hidden="true"></span>
+                        <span class="viewport-toggle-label">Square</span>
+                    </button>-->
+<!--                      span  <span class="viewport-toggle-label">Square</span>-->
+                    </button>
                     <button class="btn-secondary" type="button" id="btnFileGenHistoryMode" onclick="toggleFileGenHistoryMode()"><img class="icon" src="/static/icons/history.svg" alt="">History</button>
                     <label style="display:flex; align-items:center; gap:0.5rem; color: var(--text-dim); font-size: 0.9rem;">
                         <input type="checkbox" id="fileGenFtlvExtToggle" onchange="onFileGenFtlvToggleChange()">
@@ -1214,7 +1221,7 @@
                 </div>
             </div>
 
-            <div class="upload-zone" id="genDropZone" onclick="document.getElementById('mediaInput').click()">
+            <div class="upload-zone viewport-mask-zone" id="genDropZone" onclick="document.getElementById('mediaInput').click()">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">🎬</div>
                 <h3 style="margin: 0;">Click or Drop Files to Select</h3>
                 <p id="fileGenDropZoneHint" style="color: var(--text-dim); font-size: 0.9rem;">Supports MP4, JPG, PNG, GIF</p>
@@ -1307,7 +1314,7 @@
                 </div>
             </div>
 
-            <div class="upload-zone" id="mp4FtlvDropZone" onclick="document.getElementById('mp4FtlvInput').click()">
+            <div class="upload-zone viewport-mask-zone" id="mp4FtlvDropZone" onclick="document.getElementById('mp4FtlvInput').click()">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">📼</div>
                 <h3 style="margin: 0;">Click or Drop MP4 Files</h3>
                 <p style="color: var(--text-dim); font-size: 0.9rem;">Supports MP4 only. Output files will end with .ftlv</p>
@@ -1358,6 +1365,10 @@
                             <select id="playerFileSelect" onchange="onPlayerFileChange()"></select>
                         </div>
                         <button class="btn-secondary" onclick="browsePlayerFile()">Browse...</button>
+                        <button class="btn-secondary" type="button" onclick="toggleViewportMode()" title="Viewport preview (circle/square)">
+                            <span class="viewport-glyph" aria-hidden="true"></span>
+                            <span class="viewport-toggle-label">Square</span>
+                        </button>
                         <div class="input-group" style="min-width: 140px; margin-bottom: 0;">
                             <label>Speed</label>
                             <select id="playerSpeed" onchange="onPlayerSpeedChange()">
@@ -1389,12 +1400,12 @@
                 </div>
 
                 <div class="player-screen">
-                    <div class="player-placeholder" id="playerPlaceholder">
+                    <div class="player-placeholder viewport-mask-placeholder" id="playerPlaceholder">
                         <img class="icon" src="/static/icons/player.svg" alt="" style="width:32px;height:32px;filter:none;">
                         <strong>Select an FTLV file to preview</strong>
                         <div>Use the dropdown or click Browse to open a file.</div>
                     </div>
-                    <img id="playerFrame" alt="FTLV frame preview" />
+                    <img id="playerFrame" class="viewport-mask-image" alt="FTLV frame preview" />
                 </div>
             </div>
             <audio id="playerAudio" style="width: 100%; margin-top: 1rem; display:none;"></audio>
@@ -2052,31 +2063,47 @@
         applyPlaylistSnapshot(body);
     }
 
-    async function playlistAddFiles() {
-        const res = await fetch('/api/playlist/add_files');
-        const body = await res.json().catch(() => ({}));
-        if (!res.ok) {
-            showToast(body.error || 'Failed to add files', true);
-            return;
+    async function playlistAddFilesUpload(e) {
+        const files = Array.from(e?.target?.files || []);
+        try {
+            if (!files.length) {
+                showToast('No files selected', true);
+                return;
+            }
+            // Client-side cap: only upload files that look like FTLV by magic bytes.
+            const supported = [];
+            for (const f of files) {
+                if (await _playlistIsFtlvFile(f)) supported.push(f);
+            }
+            const ignored = files.length - supported.length;
+            if (!supported.length) {
+                showToast('No supported FTLV files selected', true);
+                return;
+            }
+            if (ignored) {
+                showToast(`Ignoring ${ignored} unsupported file(s)`, true);
+            }
+
+            const form = new FormData();
+            supported.forEach(f => form.append('file', f));
+            const res = await fetch('/api/playlist/add_files_upload', { method: 'POST', body: form });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                showToast(body.error || 'Failed to add files', true);
+                return;
+            }
+            applyPlaylistSnapshot(body);
+            const added = Number(body.added ?? 0) || 0;
+            const ignoredServer = Array.isArray(body.errors) ? body.errors.length : 0;
+            if (added) showToast(`Added ${added} file(s)`);
+            else if (ignoredServer) showToast('No FTLV files added (non-FTLV selections were ignored)', true);
+            else showToast('No files added', true);
+        } finally {
+            try { e.target.value = ''; } catch {}
         }
-        applyPlaylistSnapshot(body);
-        const added = Number(body.added ?? 0) || 0;
-        const ignored = Array.isArray(body.errors) ? body.errors.length : 0;
-        if (added) showToast(`Added ${added} file(s)`);
-        else if (ignored) showToast('No FTLV files added (non-FTLV selections were ignored)', true);
-        else showToast('No files selected', true);
     }
 
-    async function playlistAddFolder() {
-        const res = await fetch('/api/playlist/add_folder');
-        const body = await res.json().catch(() => ({}));
-        if (!res.ok) {
-            showToast(body.error || 'Failed to add folder', true);
-            return;
-        }
-        applyPlaylistSnapshot(body);
-        if (body.added != null) showToast(`Added ${body.added} file(s)`);
-    }
+    // Folder import intentionally removed for cross-platform reliability.
 
     async function playlistClear() {
         const res = await fetch('/api/playlist/clear', { method: 'POST' });
@@ -2105,6 +2132,16 @@
             showToast(body.message || 'FTL.LIS loaded');
         } finally {
             e.target.value = '';
+        }
+    }
+
+    async function _playlistIsFtlvFile(file) {
+        try {
+            const head = await file.slice(0, 4).arrayBuffer();
+            const b = new Uint8Array(head);
+            return b.length === 4 && b[0] === 0x46 && b[1] === 0x54 && b[2] === 0x4C && b[3] === 0x56; // "FTLV"
+        } catch {
+            return false;
         }
     }
 
@@ -2365,8 +2402,9 @@
         const m = mode === 'circle' ? 'circle' : 'square';
         document.documentElement.setAttribute('data-viewport', m);
         localStorage.setItem('viewportMode', m);
-        const text = document.getElementById('viewportToggleText');
-        if (text) text.textContent = m === 'circle' ? 'Circle' : 'Square';
+        document.querySelectorAll('.viewport-toggle-label').forEach((el) => {
+            el.textContent = m === 'circle' ? 'Circle' : 'Square';
+        });
     }
 
     function toggleViewportMode() {

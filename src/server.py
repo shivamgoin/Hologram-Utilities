@@ -314,6 +314,7 @@ app = Flask(__name__)
 import threading
 import time
 import uuid
+import zlib
 
 # Global tasks dictionary
 # task_id -> {status, progress, input, output, results, start_time}
@@ -2122,30 +2123,87 @@ def playlist_load_reference_browse():
 
 @app.route('/api/playlist/add_files', methods=['GET'])
 def playlist_add_files():
+    return jsonify(
+        {
+            "error": "Use browser file upload instead of server-side file dialogs.",
+            "hint": "Playlist Manager -> Open Files uses /api/playlist/add_files_upload",
+            **_playlist_snapshot(),
+        }
+    ), 410
+
+@app.route('/api/playlist/add_files_upload', methods=['POST'])
+def playlist_add_files_upload():
+    """
+    Cross-platform file import for Playlist Manager.
+    Uses browser file input upload instead of OS-native dialogs (Tk/osascript),
+    which often fail when the project is shared to Windows users.
+    """
     try:
-        settings = load_settings()
-        gen = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
-        downloads = (Path.home() / "Downloads").expanduser()
-        generated = downloads / "generated_file"
-        # Prefer the common output folder used by the generator (often contains extensionless .FTLV payloads).
-        if generated.exists() and generated.is_dir():
-            initial = str(generated)
-        else:
-            initial = (
-                gen.get("playlist_storage_directory")
-                or gen.get("default_output_directory")
-                or gen.get("target_directory")
-                or str(downloads)
-            )
-        paths = _pick_ftlv_files_dialog(initial_dir=str(initial))
+        files = request.files.getlist('file')
+        if not files:
+            files = request.files.getlist('files')
+        if not files:
+            return jsonify({"error": "No files uploaded", **_playlist_snapshot()}), 400
+
         added = 0
         errors: list[dict] = []
-        for raw in paths:
-            res = _playlist_add_ftlv_path(Path(raw))
-            if res.get("ok"):
+        for fs in files:
+            name = os.path.basename(str(getattr(fs, "filename", "") or ""))
+            if not name:
+                errors.append({"ok": False, "error": "Missing filename"})
+                continue
+
+            # Stream into a temporary file so we can reuse existing parser helpers.
+            fd, tmp_path = tempfile.mkstemp(prefix="ftlv_upload_", suffix=".bin")
+            try:
+                with os.fdopen(fd, "wb") as f:
+                    fs.stream.seek(0)
+                    for chunk in iter(lambda: fs.stream.read(1024 * 1024), b""):
+                        f.write(chunk)
+                p = Path(tmp_path)
+                if not _is_ftlv_file(p):
+                    errors.append({"ok": False, "error": "Not an FTLV file", "name": name})
+                    continue
+                try:
+                    v1_u32, v2_u16, _ver = read_md_ftlv_meta(p)
+                    v1 = int(v1_u32) & 0xFFFF
+                    v2 = int(v2_u16) & 0xFFFF
+                except Exception as e:
+                    errors.append({"ok": False, "error": f"Failed to read metadata: {e}", "name": name})
+                    continue
+                try:
+                    crc = default_crc_hex8_for_file(p)
+                except Exception:
+                    # As a fallback, compute CRC32 ourselves.
+                    crc_i = 0
+                    with p.open("rb") as f2:
+                        for chunk in iter(lambda: f2.read(1024 * 1024), b""):
+                            crc_i = zlib.crc32(chunk, crc_i)
+                    crc = f"{crc_i & 0xFFFFFFFF:08X}"
+
+                existing = playlist_workspace["entries"].get(name)
+                enabled = True
+                if isinstance(existing, dict) and ("enabled" in existing):
+                    enabled = bool(existing.get("enabled"))
+
+                playlist_workspace["entries"][name] = {
+                    "enabled": enabled,
+                    "source": "upload",
+                    "path": None,
+                    "v1": v1,
+                    "v2": v2,
+                    "crc": _safe_hex8(existing.get("crc") if isinstance(existing, dict) else None) or _safe_hex8(crc),
+                }
+                if name not in playlist_workspace["order"]:
+                    playlist_workspace["order"].append(name)
                 added += 1
-            else:
-                errors.append(res)
+            finally:
+                try:
+                    if os.path.exists(tmp_path):
+                        os.remove(tmp_path)
+                except Exception:
+                    pass
+
         snap = _playlist_snapshot()
         snap["added"] = added
         snap["errors"] = errors[:20]
@@ -2155,42 +2213,12 @@ def playlist_add_files():
 
 @app.route('/api/playlist/add_folder', methods=['GET'])
 def playlist_add_folder():
-    try:
-        settings = load_settings()
-        gen = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
-        initial = gen.get("playlist_storage_directory") or gen.get("target_directory") or str(Path.home() / "Downloads")
-        folder = _pick_folder_dialog(str(initial), title="Select folder containing .FTLV files")
-        if not folder:
-            return jsonify(_playlist_snapshot())
-        root = Path(folder)
-        added = 0
-        errors: list[dict] = []
-        # Scan for .ftlv files (cap to avoid accidental huge scans).
-        cap = 5000
-        count = 0
-        for dirpath, _dirnames, filenames in os.walk(root):
-            for fn in filenames:
-                if not fn.lower().endswith(".ftlv"):
-                    continue
-                count += 1
-                if count > cap:
-                    break
-                res = _playlist_add_ftlv_path(Path(dirpath) / fn)
-                if res.get("ok"):
-                    added += 1
-                else:
-                    errors.append(res)
-            if count > cap:
-                break
-        snap = _playlist_snapshot()
-        snap["added"] = added
-        snap["folder"] = str(root)
-        snap["errors"] = errors[:20]
-        if count > cap:
-            snap["warning"] = f"Folder scan capped at {cap} files"
-        return jsonify(snap)
-    except Exception as e:
-        return jsonify({"error": str(e), **_playlist_snapshot()}), 500
+    return jsonify(
+        {
+            "error": "Folder import removed for cross-platform reliability. Use Open Files to select multiple items.",
+            **_playlist_snapshot(),
+        }
+    ), 410
 
 @app.route('/api/playlist/toggle', methods=['POST'])
 def playlist_toggle_entry():
@@ -2590,14 +2618,36 @@ def browse_directory():
                 pass
         else:
             if not HAS_TKINTER:
-                return jsonify({"error": "Tkinter not available on this server"}), 501
-            
-            root = tk.Tk()
-            root.withdraw()  # Hide main window
-            root.attributes("-topmost", True) # Bring to front
-            
-            directory = filedialog.askdirectory(initialdir=initial, title=prompt)
-            root.destroy()
+                # Windows fallback: use PowerShell + WinForms folder picker (no tkinter dependency).
+                if sys.platform.startswith("win"):
+                    try:
+                        ps_prompt = str(prompt).replace("'", "''")
+                        ps_initial = str(initial).replace("'", "''")
+                        ps = (
+                            "Add-Type -AssemblyName System.Windows.Forms; "
+                            "$d = New-Object System.Windows.Forms.FolderBrowserDialog; "
+                            f"$d.Description = '{ps_prompt}'; "
+                            f"$d.SelectedPath = '{ps_initial}'; "
+                            "if($d.ShowDialog() -eq 'OK'){ $d.SelectedPath }"
+                        )
+                        result = subprocess.run(
+                            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps],
+                            capture_output=True,
+                            text=True,
+                        )
+                        if result.returncode == 0:
+                            directory = (result.stdout or "").strip()
+                    except Exception:
+                        directory = ""
+                else:
+                    return jsonify({"error": "Tkinter not available on this server"}), 501
+            else:
+                root = tk.Tk()
+                root.withdraw()  # Hide main window
+                root.attributes("-topmost", True) # Bring to front
+                
+                directory = filedialog.askdirectory(initialdir=initial, title=prompt)
+                root.destroy()
             
         if directory:
             return jsonify({"path": os.path.normpath(directory)})
