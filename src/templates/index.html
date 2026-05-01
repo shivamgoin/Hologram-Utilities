@@ -263,6 +263,7 @@
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             background: var(--panel-bg);
+            position: relative;
         }
 
         .upload-zone:hover {
@@ -854,6 +855,38 @@
             border: 1px solid rgba(255,255,255,0.08);
             background: #000;
         }
+
+        /* Viewport preview mode (square vs circle) applied to Player and upload zones */
+        .viewport-glyph {
+            width: 12px;
+            height: 12px;
+            border: 1.5px solid currentColor;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        html[data-viewport="circle"] .viewport-glyph { border-radius: 999px; }
+
+        html[data-viewport="circle"] .player-screen img {
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 999px;
+        }
+        html[data-viewport="circle"] .player-placeholder {
+            clip-path: circle(48% at 50% 50%);
+        }
+        html[data-viewport="circle"] .upload-zone {
+            max-width: 720px;
+            margin-left: auto;
+            margin-right: auto;
+            aspect-ratio: 1 / 1;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            padding: 2rem;
+        }
+        html[data-viewport="circle"] .upload-zone > * {
+            max-width: 520px;
+        }
         .player-controls {
             display: grid;
             grid-template-columns: 1fr;
@@ -1016,6 +1049,10 @@
                 <button class="btn-secondary" id="topbarUploadBtn" onclick="triggerTopbarUpload()" style="display:none;"><img class="icon" src="/static/icons/upload.svg" alt="">Upload Files</button>
                 <button class="btn-secondary" id="topbarUploadFolderBtn" onclick="triggerTopbarUploadFolder()" style="display:none;"><img class="icon" src="/static/icons/folder-upload.svg" alt="">Upload Folder</button>
                 <button class="btn-secondary" onclick="clearCurrentScreen()"><img class="icon" src="/static/icons/clear.svg" alt="">Clear Screen</button>
+                <button class="btn-secondary" id="viewportToggleBtn" onclick="toggleViewportMode()" title="Toggle viewport preview (circle/square)">
+                    <span class="viewport-glyph" aria-hidden="true"></span>
+                    <span id="viewportToggleText">Square</span>
+                </button>
                 <button class="btn-secondary" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark mode"><img class="icon" id="themeToggleIcon" src="/static/icons/moon.svg" alt=""><span id="themeToggleText">Dark</span></button>
                 <button class="btn-primary" onclick="refreshCurrentView()"><img class="icon" src="/static/icons/refresh.svg" alt="">Refresh</button>
             </div>
@@ -2316,6 +2353,24 @@
 
     function toggleTheme() {
         applyTheme(getTheme() === 'light' ? 'dark' : 'light');
+    }
+
+    function getViewportMode() {
+        const stored = localStorage.getItem('viewportMode');
+        if (stored === 'circle' || stored === 'square') return stored;
+        return 'square';
+    }
+
+    function applyViewportMode(mode) {
+        const m = mode === 'circle' ? 'circle' : 'square';
+        document.documentElement.setAttribute('data-viewport', m);
+        localStorage.setItem('viewportMode', m);
+        const text = document.getElementById('viewportToggleText');
+        if (text) text.textContent = m === 'circle' ? 'Circle' : 'Square';
+    }
+
+    function toggleViewportMode() {
+        applyViewportMode(getViewportMode() === 'circle' ? 'square' : 'circle');
     }
 
     function updateTopbarUploadButton() {
@@ -3806,6 +3861,7 @@
     switchTab('filegen');
     onFileGenFtlvToggleChange();
     applyTheme(getTheme());
+    applyViewportMode(getViewportMode());
 </script>
 
 </body>
