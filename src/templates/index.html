@@ -213,7 +213,6 @@
                 </div>
                 <div class="section-head-actions">
                     <button class="btn-secondary" type="button" id="btnFileGenSettings" onclick="toggleFileGenSettings()"><img class="icon" src="/static/icons/tune.svg" alt="">Settings</button>
-                    <button class="btn-secondary" type="button" onclick="browseTargetDirForFileGen()"><img class="icon" src="/static/icons/folder-upload.svg" alt="">Browse Folder</button>
 <!--                    <button class="btn-secondary" type="button" onclick="toggleViewportMode()" title="Viewport preview (circle/square)">
                         <span class="viewport-glyph" aria-hidden="true"></span>
                         <span class="viewport-toggle-label">Square</span>
@@ -409,7 +408,7 @@
 
             <div class="player-wrap">
                 <div class="player-controls">
-                    <div class="player-row">
+                    <div class="player-row player-row-top">
                         <div class="input-group" style="min-width: 260px; margin-bottom: 0;">
                             <label>FTLV File</label>
                             <select id="playerFileSelect" onchange="onPlayerFileChange()"></select>
@@ -449,13 +448,13 @@
                     <div class="notice" id="playerNotice" style="display:none;"></div>
                 </div>
 
-                <div class="player-screen">
-                    <div class="player-placeholder viewport-mask-placeholder" id="playerPlaceholder">
-                        <img class="icon" src="/static/icons/player.svg" alt="" style="width:32px;height:32px;filter:none;">
-                        <strong>Select an FTLV file to preview</strong>
-                        <div>Use the dropdown or click Browse to open a file.</div>
-                    </div>
-                    <img id="playerFrame" class="viewport-mask-image" alt="FTLV frame preview" />
+                    <div class="player-screen">
+                        <div class="player-placeholder viewport-mask-placeholder" id="playerPlaceholder">
+                            <img class="icon" src="/static/icons/player.svg" alt="" style="width:32px;height:32px;filter:none;">
+                            <strong>Select an FTLV file to preview</strong>
+                            <div>Use the dropdown or click Browse to open a file.</div>
+                        </div>
+                    <img id="playerFrame" class="viewport-mask-image" alt="" />
                 </div>
             </div>
             <audio id="playerAudio" style="width: 100%; margin-top: 1rem; display:none;"></audio>

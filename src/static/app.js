@@ -42,6 +42,9 @@
     function setPlayerPlaceholderVisible(visible) {
         const ph = document.getElementById('playerPlaceholder');
         if (ph) ph.style.display = visible ? 'flex' : 'none';
+        const img = document.getElementById('playerFrame');
+        // Avoid showing a broken-image glyph inside the viewport when no frame is loaded.
+        if (img) img.style.display = visible ? 'none' : '';
     }
 
     async function loadPlayableFiles() {

@@ -848,6 +848,11 @@
             border: 1px solid rgba(255,255,255,0.08);
             background: #000;
         }
+        /* Prevent broken-image icon/alt text from showing inside the viewport before a frame is loaded. */
+        #playerFrame:not([src]),
+        #playerFrame[src=""] {
+            display: none;
+        }
 
         /* Viewport preview mode (square vs circle) applied to selected targets only */
         .viewport-glyph {
@@ -884,6 +889,18 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 0.75rem;
+        }
+        .player-row-top {
+            display: grid;
+            grid-template-columns: minmax(260px, 1fr) auto auto minmax(140px, 190px) auto;
+            align-items: end;
+            gap: 0.75rem;
+        }
+        @media (max-width: 900px) {
+            .player-row-top {
+                grid-template-columns: 1fr;
+                align-items: stretch;
+            }
         }
         .player-row {
             display: flex;
