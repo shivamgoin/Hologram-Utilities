@@ -15,7 +15,7 @@ try:
     from werkzeug.utils import secure_filename
 except ImportError:
     print("\n[!] ERROR: Flask is not installed.")
-    print("[!] Please run 'pip install flask' or use 'start.bat' to launch the manager.\n")
+    print("[!] Please run 'pip install flask' or use the platform launcher in tools/win or tools/mac.\n")
     sys.exit(1)
 
 # For directory browsing
@@ -325,6 +325,195 @@ def get_task_status(task_id):
 player_file_tokens: dict[str, dict] = {}
 PLAYER_TOKEN_TTL_S = 60 * 30  # 30 minutes
 
+# Playlist Manager workspace (in-memory).
+# This decouples playlist editing from any "source folder" concept:
+# users can load an existing FTL.LIS (reference entries) and optionally add
+# .FTLV files from arbitrary paths; we then generate a new FTL.LIS into a chosen
+# output directory.
+playlist_workspace: dict = {
+    "entries": {},  # name -> {enabled, source, path?, v1, v2, crc}
+    "order": [],  # list of names in display order
+    "reference_path": None,
+}
+
+def _playlist_clear() -> None:
+    playlist_workspace["entries"] = {}
+    playlist_workspace["order"] = []
+    playlist_workspace["reference_path"] = None
+
+def _playlist_set_from_reference(ftl_lis_path: Path) -> dict:
+    header_value, record_count, entries = parse_ftl_lis(ftl_lis_path)
+    _playlist_clear()
+    playlist_workspace["reference_path"] = str(ftl_lis_path)
+    for e in entries:
+        name = os.path.basename(str(getattr(e, "name", "") or ""))
+        if not name:
+            continue
+        playlist_workspace["entries"][name] = {
+            "enabled": True,
+            "source": "reference",
+            "path": None,
+            "v1": int(getattr(e, "v1", 0) or 0),
+            "v2": int(getattr(e, "v2", 0) or 0),
+            "crc": _safe_hex8(getattr(e, "crc_hex8", None)),
+        }
+        playlist_workspace["order"].append(name)
+    return {"header_value": header_value, "record_count": record_count, "entry_count": len(entries)}
+
+def _playlist_add_ftlv_path(p: Path) -> dict:
+    if not p.exists() or not p.is_file():
+        return {"ok": False, "error": "File not found", "path": str(p)}
+    if not _is_ftlv_file(p):
+        return {"ok": False, "error": "Not an FTLV file", "path": str(p)}
+
+    name = os.path.basename(str(p.name))
+    if not name:
+        return {"ok": False, "error": "Invalid filename", "path": str(p)}
+
+    try:
+        v1_u32, v2, _ver = read_md_ftlv_meta(p)
+        v1 = int(v1_u32) & 0xFFFF
+        v2 = int(v2) & 0xFFFF
+        crc = default_crc_hex8_for_file(p)
+    except Exception as e:
+        return {"ok": False, "error": f"Failed to read metadata: {e}", "path": str(p)}
+
+    existing = playlist_workspace["entries"].get(name)
+    enabled = True
+    if isinstance(existing, dict) and ("enabled" in existing):
+        enabled = bool(existing.get("enabled"))
+
+    playlist_workspace["entries"][name] = {
+        "enabled": enabled,
+        "source": "file",
+        "path": str(p),
+        "v1": v1,
+        "v2": v2,
+        "crc": _safe_hex8(existing.get("crc") if isinstance(existing, dict) else None) or _safe_hex8(crc),
+    }
+    if name not in playlist_workspace["order"]:
+        playlist_workspace["order"].append(name)
+    return {"ok": True, "name": name, "path": str(p)}
+
+def _pick_ftlv_files_dialog(initial_dir: str | None = None) -> list[str]:
+    initial_dir = initial_dir or str(Path.home() / "Downloads")
+    initial_dir = initial_dir if os.path.isdir(initial_dir) else str(Path.home() / "Downloads")
+    paths: list[str] = []
+    if sys.platform == "darwin":
+        initial_escaped = str(initial_dir).replace('"', '\\"')
+        script = (
+            'set theFiles to choose file with prompt "Select FTLV media files (e.g. 0001-4903). Non-FTLV files will be ignored." '
+            'default location (POSIX file "' + initial_escaped + '") '
+            'multiple selections allowed true\n'
+            'set out to ""\n'
+            'repeat with f in theFiles\n'
+            'set out to out & (POSIX path of f) & "\\n"\n'
+            'end repeat\n'
+            'return out'
+        )
+        try:
+            result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
+            if result.returncode == 0:
+                raw = (result.stdout or "").strip()
+                if raw:
+                    paths = [x.strip() for x in raw.splitlines() if x.strip()]
+        except Exception:
+            pass
+    else:
+        if not HAS_TKINTER:
+            raise RuntimeError("Tkinter not available on this server")
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        chosen = filedialog.askopenfilenames(
+            initialdir=initial_dir,
+            title="Select FTLV media files (e.g. 0001-4903)",
+            # Keep "All files" so extensionless fan files remain selectable; we validate by signature.
+            filetypes=[("FTLV", "*.FTLV;*.ftlv"), ("All files", "*.*")],
+        )
+        root.destroy()
+        paths = [os.path.normpath(p) for p in (chosen or []) if p]
+    return paths
+
+def _pick_folder_dialog(initial_dir: str | None = None, title: str = "Select Folder") -> str | None:
+    initial_dir = initial_dir or str(Path.home() / "Downloads")
+    initial_dir = initial_dir if os.path.isdir(initial_dir) else str(Path.home() / "Downloads")
+    if sys.platform == "darwin":
+        initial_escaped = str(initial_dir).replace('"', '\\"')
+        title_escaped = str(title).replace('"', '\\"')
+        script = f'set theFolder to choose folder with prompt "{title_escaped}" default location (POSIX file "{initial_escaped}")\nPOSIX path of theFolder'
+        try:
+            result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
+            if result.returncode == 0:
+                out = (result.stdout or "").strip()
+                return out or None
+        except Exception:
+            return None
+        return None
+    if not HAS_TKINTER:
+        raise RuntimeError("Tkinter not available on this server")
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    directory = filedialog.askdirectory(initialdir=initial_dir, title=title)
+    root.destroy()
+    return os.path.normpath(directory) if directory else None
+
+def _playlist_snapshot() -> dict:
+    gen = _load_generator_settings()
+    header_style = str(gen.get("header_style", "count_fc"))
+    max_entries = int(gen.get("max_entries", 0))
+    header_used_slots = int(gen.get("header_used_slots", 0))
+    record_count = int(gen.get("record_count", 100))
+
+    order = [n for n in (playlist_workspace.get("order") or []) if n in (playlist_workspace.get("entries") or {})]
+    # Append any missing items in stable order.
+    for n in (playlist_workspace.get("entries") or {}).keys():
+        if n not in order:
+            order.append(n)
+
+    enabled_names = [n for n in order if bool((playlist_workspace["entries"].get(n) or {}).get("enabled", True))]
+    effective_max = len(enabled_names) if header_style == "count_fc" else (max_entries if max_entries else len(enabled_names))
+    if record_count > 0:
+        effective_max = min(effective_max, record_count)
+    if header_style == "used_len" and header_used_slots > 0:
+        effective_max = min(effective_max, header_used_slots)
+    included = set(enabled_names[:effective_max]) if effective_max else set(enabled_names)
+
+    out_entries = []
+    for idx, name in enumerate(order, start=1):
+        e = dict(playlist_workspace["entries"].get(name) or {})
+        out_entries.append(
+            {
+                "fileName": name,
+                "orderIndex": idx,
+                "enabled": bool(e.get("enabled", True)),
+                "source": e.get("source") or "reference",
+                "path": e.get("path"),
+                "v1": int(e.get("v1", 0) or 0),
+                "v2": int(e.get("v2", 0) or 0),
+                "crc": _safe_hex8(e.get("crc")),
+                "willBeIncluded": name in included,
+                "maxEntries": effective_max,
+                "headerStyle": header_style,
+                "headerUsedSlots": header_used_slots,
+            }
+        )
+
+    # Playlist output settings
+    settings = load_settings()
+    gen2 = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
+    downloads_root = str((Path.home() / "Downloads").expanduser().resolve())
+    output_dir = str(gen2.get("playlist_output_directory") or downloads_root)
+    ask_each_time = bool(gen2.get("playlist_prompt_output_each_time", True))
+
+    return {
+        "entries": out_entries,
+        "referencePath": playlist_workspace.get("reference_path"),
+        "outputDir": output_dir,
+        "askOutputEachTime": ask_each_time,
+    }
+
 def _settings_housekeeping() -> None:
     try:
         update_paths()
@@ -349,16 +538,34 @@ def update_paths():
     global MEDIA_FOLDER, OUTPUT_FILE
     settings = load_settings()
     gen = settings.get("__generator", {})
-    target = gen.get("target_directory")
+    # Per-tab: Playlist Manager uses storage + output folders.
+    # Back-compat: fall back to older `storage_directory`/`target_directory` keys if present.
+    storage = gen.get("playlist_storage_directory") or gen.get("storage_directory") or gen.get("target_directory")
+    output_root = gen.get("playlist_output_directory") or gen.get("target_directory")
     
-    if not target or not os.path.exists(target):
-        target = str(Path.home() / "Downloads")
+    if not storage or not os.path.exists(storage):
+        storage = str(Path.home() / "Downloads")
+    if not output_root or not os.path.exists(output_root):
+        output_root = str(Path.home() / "Downloads")
         
-    if target and os.path.isdir(target):
-        MEDIA_FOLDER = target
-        OUTPUT_FILE = os.path.join(target, 'FTL.LIS')
+    if storage and os.path.isdir(storage):
+        # Many device layouts store media files in `<storage>/media` with `FTL.LIS` at the storage root.
+        # Support both:
+        # - `<storage>/media` if present
+        # - otherwise fall back to `<storage>`
+        storage_root = storage
+        media_dir = os.path.join(storage_root, "media")
+        MEDIA_FOLDER = media_dir if os.path.isdir(media_dir) else storage_root
+        try:
+            os.makedirs(MEDIA_FOLDER, exist_ok=True)
+        except Exception:
+            pass
     else:
         MEDIA_FOLDER = BASE_DIR
+
+    if output_root and os.path.isdir(output_root):
+        OUTPUT_FILE = os.path.join(output_root, 'FTL.LIS')
+    else:
         OUTPUT_FILE = os.path.join(BASE_DIR, 'FTL.LIS')
     
     app.config['UPLOAD_FOLDER'] = MEDIA_FOLDER
@@ -400,7 +607,54 @@ def _load_generator_settings() -> dict:
     max_entries = int(gen.get("max_entries", max_entries_default))
     header_used_slots = int(gen.get("header_used_slots", 0))
     record_count = int(gen.get("record_count", 100))
-    target_directory = str(gen.get("target_directory") or Path.home() / "Downloads")
+    downloads_root = (Path.home() / "Downloads").expanduser().resolve()
+    # Shared default output directory for all tabs (can be overridden per-tab).
+    default_output_directory = str(
+        gen.get("default_output_directory")
+        or gen.get("target_directory")
+        or gen.get("playlist_output_directory")
+        or downloads_root
+    )
+    try:
+        d_path = Path(default_output_directory).expanduser().resolve()
+        if not d_path.exists() or not d_path.is_dir():
+            default_output_directory = str(downloads_root)
+    except Exception:
+        default_output_directory = str(downloads_root)
+    # Per-tab folders.
+    playlist_output_directory = str(gen.get("playlist_output_directory") or default_output_directory)
+    playlist_storage_directory = str(
+        gen.get("playlist_storage_directory")
+        or gen.get("storage_directory")
+        or default_output_directory
+    )
+    filegen_output_directory = str(gen.get("filegen_output_directory") or default_output_directory)
+    mp4ftlv_output_directory = str(gen.get("mp4ftlv_output_directory") or filegen_output_directory or default_output_directory)
+    # Validate the directory; if it's missing/invalid, fall back to ~/Downloads.
+    try:
+        td_path = Path(playlist_output_directory).expanduser().resolve()
+        if not td_path.exists() or not td_path.is_dir():
+            playlist_output_directory = str(downloads_root)
+    except Exception:
+        playlist_output_directory = str(downloads_root)
+    try:
+        sd_path = Path(playlist_storage_directory).expanduser().resolve()
+        if not sd_path.exists() or not sd_path.is_dir():
+            playlist_storage_directory = str(downloads_root)
+    except Exception:
+        playlist_storage_directory = str(downloads_root)
+    try:
+        fg_path = Path(filegen_output_directory).expanduser().resolve()
+        if not fg_path.exists() or not fg_path.is_dir():
+            filegen_output_directory = str(downloads_root)
+    except Exception:
+        filegen_output_directory = str(downloads_root)
+    try:
+        m_path = Path(mp4ftlv_output_directory).expanduser().resolve()
+        if not m_path.exists() or not m_path.is_dir():
+            mp4ftlv_output_directory = str(filegen_output_directory)
+    except Exception:
+        mp4ftlv_output_directory = str(filegen_output_directory)
     playlist_order = _sanitize_playlist_order(gen.get("playlist_order", []), media_files)
 
     if header_style not in {"count_fc", "used_len"}:
@@ -420,14 +674,24 @@ def _load_generator_settings() -> dict:
             "header_used_slots": header_used_slots,
             "record_count": record_count,
             "reference_lis": reference_lis,
+            # Back-compat: keep old keys but prefer new playlist_*.
+            "storage_directory": playlist_storage_directory,
             "merge_mode": merge_mode,
-            "target_directory": target_directory,
+            # Shared default. Keep legacy `target_directory` aligned for older clients.
+            "default_output_directory": default_output_directory,
+            "target_directory": default_output_directory,
+            "playlist_storage_directory": playlist_storage_directory,
+            "playlist_output_directory": playlist_output_directory,
+            "playlist_prompt_output_each_time": bool(gen.get("playlist_prompt_output_each_time", True)),
+            "filegen_output_directory": filegen_output_directory,
+            "mp4ftlv_output_directory": mp4ftlv_output_directory,
             "playlist_order": playlist_order,
         }
     )
     _maybe_prune_settings(settings)
     update_paths()
     payload = dict(settings["__generator"])
+    payload["downloads_root"] = str(downloads_root)
     payload["ffmpegAvailable"] = ffmpeg["available"]
     payload["ffmpegSource"] = ffmpeg["source"]
     payload["ffmpegPath"] = ffmpeg["path"]
@@ -712,6 +976,19 @@ def _parse_ftlv(path: Path) -> dict:
     return _parse_ftlv_cached(str(path), int(st.st_mtime_ns))
 
 
+def _normalized_output_stem(raw_name: str, *, max_len: int = 20) -> str:
+    base = os.path.splitext(str(raw_name or ""))[0].strip()
+    base = base or f"MEDIA_{os.getpid()}"
+    return base[:max_len]
+
+
+def _generated_subfolder_name(raw_folder_name: str, *, suffix: str = "_generated") -> str:
+    name = secure_filename(str(raw_folder_name or "").strip())
+    name = name or "folder"
+    stem = _normalized_output_stem(name, max_len=32)
+    return f"{stem}{suffix}"
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -820,8 +1097,7 @@ def convert_mp4():
     if not ffmpeg_exe:
         return jsonify({'error': 'ffmpeg not found. Install ffmpeg or place it at tools/ffmpeg (or set FFMPEG_PATH).'}), 400
 
-    base_name = os.path.splitext(name)[0]
-    output_name = base_name[:20] if base_name else f"MEDIA_{int(tempfile.mkstemp()[0])}"
+    output_name = _normalized_output_stem(name)
     output_path = Path(MEDIA_FOLDER) / output_name
 
     # API params
@@ -875,26 +1151,15 @@ def convert_media():
     if not allowed:
         return jsonify({'error': error_message}), 400
 
-    def make_unique_output_name(raw_name: str) -> str:
-        base = os.path.splitext(raw_name)[0].strip()
-        base = base or f"MEDIA_{os.getpid()}"
-        base = base[:20]
-
-        candidate = base
-        i = 1
-        while (Path(MEDIA_FOLDER) / candidate).exists():
-            suffix = f"_{i}"
-            keep = max(1, 20 - len(suffix))
-            candidate = f"{base[:keep]}{suffix}"
-            i += 1
-        return candidate
+    def make_output_name(raw_name: str) -> str:
+        return _normalized_output_stem(raw_name)
 
     def convert_one(uploaded) -> dict:
         if not uploaded or not uploaded.filename:
             return {"ok": False, "error": "Missing filename"}
 
         original = secure_filename(uploaded.filename)
-        output_name = make_unique_output_name(original)
+        output_name = make_output_name(original)
         output_path = Path(MEDIA_FOLDER) / output_name
 
         with tempfile.TemporaryDirectory(prefix="media_upload_") as tmp:
@@ -988,12 +1253,38 @@ def convert_media():
 
 @app.route('/api/convert_media_async', methods=['POST'])
 def convert_media_async():
+    # NOTE: This endpoint is used by the File Generator tab; its output directory is per-tab and
+    # should not depend on Playlist Manager's storage/output folders.
     update_paths()
     files = request.files.getlist('file')
     if not files:
         files = request.files.getlist('files')
     if not files:
         return jsonify({'error': 'No file provided'}), 400
+
+    settings = load_settings()
+    gen = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
+    downloads = Path.home() / "Downloads"
+    output_dir_raw = str(request.form.get("outputDir", "") or "").strip()
+    if not output_dir_raw:
+        output_dir_raw = str(gen.get("filegen_output_directory") or downloads)
+
+    try:
+        output_root = Path(output_dir_raw).expanduser().resolve()
+    except Exception:
+        output_root = Path(output_dir_raw).expanduser()
+    try:
+        output_root.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        return jsonify({'error': f'Could not create output directory: {e}'}), 400
+
+    folder_name = str(request.form.get("folderName", "") or "").strip()
+    if folder_name:
+        output_root = output_root / _generated_subfolder_name(folder_name, suffix="_generated")
+        try:
+            output_root.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            return jsonify({'error': f'Could not create output folder: {e}'}), 400
 
     ffmpeg = _ffmpeg_status()
     allowed, error_message = _preflight_ffmpeg_requirements(files, ffmpeg["available"])
@@ -1013,7 +1304,7 @@ def convert_media_async():
         "results": [],
         "okCount": 0,
         "failCount": 0,
-        "targetDirectory": str(Path(MEDIA_FOLDER).resolve()),
+        "targetDirectory": str(output_root.resolve()),
         "startTime": time.time()
     }
 
@@ -1031,18 +1322,8 @@ def convert_media_async():
     if ffmpeg_dir:
         env["PATH"] = ffmpeg_dir + os.pathsep + env.get("PATH", "")
 
-    def make_unique_output_name_local(raw_name: str) -> str:
-        base = os.path.splitext(raw_name)[0].strip()
-        base = base or f"MEDIA_{os.getpid()}"
-        base = base[:20]
-        candidate = base
-        i = 1
-        while (Path(MEDIA_FOLDER) / candidate).exists():
-            suffix = f"_{i}"
-            keep = max(1, 20 - len(suffix))
-            candidate = f"{base[:keep]}{suffix}"
-            i += 1
-        return candidate
+    def make_output_name_local(raw_name: str) -> str:
+        return _normalized_output_stem(raw_name)
 
     def convert_one_local(uploaded, quality=50, fps=20, progress_cb=None) -> dict:
         if not uploaded or not uploaded.filename:
@@ -1053,8 +1334,8 @@ def convert_media_async():
                 progress_cb(0.2)
         except Exception:
             pass
-        output_name = make_unique_output_name_local(original)
-        output_path = Path(MEDIA_FOLDER) / output_name
+        output_name = make_output_name_local(original)
+        output_path = output_root / output_name
         with tempfile.TemporaryDirectory(prefix="media_upload_") as tmp:
             in_path = Path(tmp) / original
             uploaded.save(str(in_path))
@@ -1088,7 +1369,7 @@ def convert_media_async():
                         progress_cb(0.8)
                 except Exception:
                     pass
-                return {"ok": True, "input": original, "output": output_name, "outputPath": str(output_path.resolve()), "targetDirectory": str(Path(MEDIA_FOLDER).resolve()), "kind": "mp4"}
+                return {"ok": True, "input": original, "output": output_name, "outputPath": str(output_path.resolve()), "targetDirectory": str(output_root.resolve()), "kind": "mp4"}
 
             # Image handling...
             if kind == "jpeg":
@@ -1101,7 +1382,7 @@ def convert_media_async():
                             progress_cb(1.0)
                     except Exception:
                         pass
-                    return {"ok": True, "input": original, "output": output_name, "outputPath": str(output_path.resolve()), "targetDirectory": str(Path(MEDIA_FOLDER).resolve()), "kind": "jpeg"}
+                    return {"ok": True, "input": original, "output": output_name, "outputPath": str(output_path.resolve()), "targetDirectory": str(output_root.resolve()), "kind": "jpeg"}
             if not ffmpeg_exe:
                 return {"ok": False, "input": original, "error": "Unsupported file without ffmpeg."}
             try:
@@ -1133,7 +1414,7 @@ def convert_media_async():
                     progress_cb(1.0)
             except Exception:
                 pass
-            return {"ok": True, "input": original, "output": output_name, "outputPath": str(output_path.resolve()), "targetDirectory": str(Path(MEDIA_FOLDER).resolve()), "kind": kind}
+            return {"ok": True, "input": original, "output": output_name, "outputPath": str(output_path.resolve()), "targetDirectory": str(output_root.resolve()), "kind": kind}
 
     # API params
     conv_quality = int(request.form.get("quality", request.args.get("quality", 50)))
@@ -1192,21 +1473,231 @@ def convert_media_async():
                     task["failCount"] += 1
                 _progress_cb(1.0)
 
-            settings = load_settings()
-            for r in task["results"]:
-                if r.get("ok") and r.get("output"):
-                    out = r["output"]
-                    st = settings.get(out)
-                    if not isinstance(st, dict):
-                        st = {}
-                        settings[out] = st
-                    # Default is enabled; remove any previous "disabled" override.
-                    st.pop("enabled", None)
-            _maybe_prune_settings(settings)
+            # Only touch playlist settings when output is written into the playlist's active media folder.
+            try:
+                playlist_media = Path(MEDIA_FOLDER).resolve()
+                out_root = Path(str(task.get("targetDirectory") or "")).expanduser().resolve()
+                if out_root == playlist_media:
+                    settings2 = load_settings()
+                    for r in task["results"]:
+                        if r.get("ok") and r.get("output"):
+                            out = r["output"]
+                            st = settings2.get(out)
+                            if not isinstance(st, dict):
+                                st = {}
+                                settings2[out] = st
+                            st.pop("enabled", None)
+                    _maybe_prune_settings(settings2)
+            except Exception:
+                pass
         finally:
             # Always clean up the sync temp directory
             shutil.rmtree(dir_to_clean, ignore_errors=True)
             
+        task["status"] = "done"
+        task["endTime"] = time.time()
+
+    thread = threading.Thread(target=run_conversion, args=(sync_tmp_dir, saved_files_metadata))
+    thread.daemon = True
+    thread.start()
+    return jsonify({"taskId": task_id})
+
+
+@app.route('/api/convert_mp4_ftlv_async', methods=['POST'])
+def convert_mp4_ftlv_async():
+    files = request.files.getlist('file')
+    if not files:
+        files = request.files.getlist('files')
+    if not files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    output_dir_raw = str(request.form.get('outputDir', '') or '').strip()
+    if not output_dir_raw:
+        try:
+            settings = load_settings()
+            gen = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
+            output_dir_raw = str(gen.get("mp4ftlv_output_directory") or (Path.home() / "Downloads"))
+        except Exception:
+            output_dir_raw = str(Path.home() / "Downloads")
+
+    try:
+        output_root = Path(output_dir_raw).expanduser().resolve()
+    except Exception:
+        output_root = Path(output_dir_raw).expanduser()
+
+    try:
+        output_root.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        return jsonify({'error': f'Could not create output directory: {e}'}), 400
+
+    if not output_root.exists() or not output_root.is_dir():
+        return jsonify({'error': 'Output directory is invalid'}), 400
+
+    folder_name = str(request.form.get("folderName", "") or "").strip()
+    if folder_name:
+        output_root = output_root / _generated_subfolder_name(folder_name, suffix="_generated_ftlv")
+        try:
+            output_root.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            return jsonify({'error': f'Could not create output folder: {e}'}), 400
+
+    ffmpeg = _ffmpeg_status()
+    if not ffmpeg["available"]:
+        return jsonify({
+            'error': _ffmpeg_missing_message(),
+            'ffmpegAvailable': ffmpeg["available"],
+            'ffmpegSource': ffmpeg["source"],
+        }), 400
+
+    task_id = str(uuid.uuid4())
+    conversion_tasks[task_id] = {
+        "id": task_id,
+        "taskType": "mp4_to_ftlv_ext",
+        "status": "pending",
+        "progress": 0,
+        "files": [{"original": f.filename} for f in files],
+        "results": [],
+        "okCount": 0,
+        "failCount": 0,
+        "targetDirectory": str(output_root),
+        "startTime": time.time()
+    }
+
+    class SavedFile:
+        def __init__(self, path, filename):
+            self.path = path
+            self.filename = filename
+        def save(self, dest):
+            shutil.copy(self.path, dest)
+
+    ffmpeg_exe = ffmpeg["path"]
+    ffmpeg_dir = ffmpeg["dir"]
+    env = os.environ.copy()
+    if ffmpeg_dir:
+        env["PATH"] = ffmpeg_dir + os.pathsep + env.get("PATH", "")
+
+    def make_output_name_local(raw_name: str) -> str:
+        return f"{_normalized_output_stem(raw_name)}.ftlv"
+
+    def convert_one_local(uploaded, quality=50, fps=20, progress_cb=None) -> dict:
+        if not uploaded or not uploaded.filename:
+            return {"ok": False, "error": "Missing filename"}
+
+        original = secure_filename(uploaded.filename)
+        try:
+            if progress_cb:
+                progress_cb(0.2)
+        except Exception:
+            pass
+
+        output_name = make_output_name_local(original)
+        output_path = output_root / output_name
+        with tempfile.TemporaryDirectory(prefix="mp4_ftlv_upload_") as tmp:
+            in_path = Path(tmp) / original
+            uploaded.save(str(in_path))
+            kind = _detect_media_kind(in_path, original)
+            if kind != "mp4":
+                return {"ok": False, "input": original, "error": "Only MP4 files are allowed in this tab"}
+
+            try:
+                if progress_cb:
+                    progress_cb(0.6)
+            except Exception:
+                pass
+
+            script = Path(BASE_DIR) / "mp4_to_ftlv.py"
+            cmd = [
+                sys.executable, str(script),
+                "--in", str(in_path),
+                "--out", str(output_path),
+                "--quality", str(quality),
+                "--fps", str(fps)
+            ]
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env=env
+            )
+            pulse = 0
+            while proc.poll() is None:
+                time.sleep(1.0)
+                pulse += 1
+                # Keep the UI moving during longer ffmpeg/packing work.
+                frac = min(0.95, 0.6 + (pulse * 0.04))
+                try:
+                    if progress_cb:
+                        progress_cb(frac)
+                except Exception:
+                    pass
+
+            stdout, stderr = proc.communicate()
+            if proc.returncode != 0:
+                return {"ok": False, "input": original, "error": "Conversion failed", "details": (stderr.strip() or stdout.strip())}
+
+            try:
+                if progress_cb:
+                    progress_cb(1.0)
+            except Exception:
+                pass
+
+            return {
+                "ok": True,
+                "input": original,
+                "output": output_name,
+                "outputPath": str(output_path.resolve()),
+                "targetDirectory": str(output_root),
+                "kind": "mp4"
+            }
+
+    conv_quality = int(request.form.get("quality", request.args.get("quality", 50)))
+    conv_fps = int(request.form.get("fps", request.args.get("fps", 20)))
+
+    sync_tmp_dir = tempfile.mkdtemp(prefix="async_mp4_ftlv_")
+    saved_files_metadata = []
+    for f in files:
+        if not f.filename:
+            continue
+        safe_name = secure_filename(f.filename)
+        temp_p = Path(sync_tmp_dir) / safe_name
+        f.save(str(temp_p))
+        saved_files_metadata.append({"path": temp_p, "original_name": f.filename})
+
+    def run_conversion(dir_to_clean, files_to_process):
+        task = conversion_tasks[task_id]
+        task["status"] = "processing"
+        try:
+            total = len(files_to_process)
+            for i, meta in enumerate(files_to_process):
+                sf = SavedFile(meta["path"], meta["original_name"])
+                last_progress = {"val": 0}
+
+                def _progress_cb(frac: float) -> None:
+                    try:
+                        frac = float(frac)
+                    except Exception:
+                        return
+                    frac = max(0.0, min(1.0, frac))
+                    if frac < last_progress["val"]:
+                        frac = last_progress["val"]
+                    last_progress["val"] = frac
+                    overall = int(((i + frac) / max(1, total)) * 100)
+                    if overall < task.get("progress", 0):
+                        overall = int(task.get("progress", 0))
+                    task["progress"] = overall
+
+                _progress_cb(0.0)
+                res = convert_one_local(sf, quality=conv_quality, fps=conv_fps, progress_cb=_progress_cb)
+                task["results"].append(res)
+                if res.get("ok"):
+                    task["okCount"] += 1
+                else:
+                    task["failCount"] += 1
+                _progress_cb(1.0)
+        finally:
+            shutil.rmtree(dir_to_clean, ignore_errors=True)
+
         task["status"] = "done"
         task["endTime"] = time.time()
 
@@ -1224,6 +1715,37 @@ def get_task(task_id):
 def list_tasks():
     sorted_tasks = sorted(conversion_tasks.values(), key=lambda x: x.get("startTime", 0), reverse=True)
     return jsonify(sorted_tasks[:10])
+
+
+@app.route('/api/clear_screen_state', methods=['POST'])
+def clear_screen_state():
+    data = request.get_json(silent=True) or {}
+    scope = str(data.get('scope') or 'all').strip().lower()
+
+    if scope == 'filegen':
+        for task_id, task in list(conversion_tasks.items()):
+            if task.get("taskType") != "mp4_to_ftlv_ext":
+                conversion_tasks.pop(task_id, None)
+        return jsonify({'message': 'File Generator screen state cleared'})
+
+    if scope == 'mp4ftlv':
+        for task_id, task in list(conversion_tasks.items()):
+            if task.get("taskType") == "mp4_to_ftlv_ext":
+                conversion_tasks.pop(task_id, None)
+        return jsonify({'message': '.mp4_to_.ftlv screen state cleared'})
+
+    if scope == 'player':
+        player_file_tokens.clear()
+        _parse_ftlv_cached.cache_clear()
+        return jsonify({'message': 'Player screen state cleared'})
+
+    if scope == 'playlist':
+        return jsonify({'message': 'Playlist screen state cleared'})
+
+    conversion_tasks.clear()
+    player_file_tokens.clear()
+    _parse_ftlv_cached.cache_clear()
+    return jsonify({'message': 'Screen state cleared'})
 
 
 @app.route('/api/update', methods=['POST'])
@@ -1341,14 +1863,25 @@ def get_reference_lis():
     gen = _load_generator_settings()
     ref = Path(gen.get("reference_lis", REFERENCE_FTL_LIS))
     if not ref.exists():
-        return jsonify({"exists": False, "path": str(ref)})
+        return jsonify({"exists": False, "path": str(ref), "label": gen.get("reference_lis_label")})
 
     try:
         header_value, record_count, entries = parse_ftl_lis(ref)
+        try:
+            stat = ref.stat()
+            mtime = int(stat.st_mtime)
+            size = int(stat.st_size)
+        except Exception:
+            mtime = None
+            size = None
         return jsonify(
             {
                 "exists": True,
                 "path": str(ref),
+                "basename": ref.name,
+                "label": gen.get("reference_lis_label"),
+                "mtime": mtime,
+                "size": size,
                 "header_value": header_value,
                 "record_count": record_count,
                 "entry_count": len(entries),
@@ -1356,7 +1889,15 @@ def get_reference_lis():
             }
         )
     except Exception as e:
-        return jsonify({"exists": True, "path": str(ref), "error": str(e)}), 400
+        return jsonify(
+            {
+                "exists": True,
+                "path": str(ref),
+                "basename": ref.name,
+                "label": gen.get("reference_lis_label"),
+                "error": str(e),
+            }
+        ), 400
 
 
 @app.route('/api/reference_lis', methods=['POST'])
@@ -1371,11 +1912,36 @@ def upload_reference_lis():
     # Always store as reference/FTL.LIS
     f.save(REFERENCE_UPLOAD_PATH)
 
+    # Validate it's parsable as FTL.LIS (fail fast with a clear error).
+    try:
+        _hv, _rc, entries = parse_ftl_lis(Path(REFERENCE_UPLOAD_PATH))
+        entry_count = len(entries)
+        header_style = infer_header_style(Path(REFERENCE_UPLOAD_PATH)) or "unknown"
+    except Exception as e:
+        try:
+            os.remove(REFERENCE_UPLOAD_PATH)
+        except Exception:
+            pass
+        return jsonify({"error": f"Selected file is not a valid FTL.LIS: {e}"}), 400
+
     settings = load_settings()
     settings.setdefault("__generator", {})
     settings["__generator"]["reference_lis"] = REFERENCE_UPLOAD_PATH
+    # Preserve original filename so UI doesn't look "stuck" on the same path.
+    try:
+        settings["__generator"]["reference_lis_label"] = secure_filename(f.filename) or "FTL.LIS"
+    except Exception:
+        settings["__generator"]["reference_lis_label"] = "FTL.LIS"
     _maybe_prune_settings(settings)
-    return jsonify({"message": "Reference FTL.LIS loaded", "path": REFERENCE_UPLOAD_PATH})
+    return jsonify(
+        {
+            "message": "Reference FTL.LIS loaded",
+            "path": REFERENCE_UPLOAD_PATH,
+            "label": settings["__generator"].get("reference_lis_label"),
+            "entry_count": entry_count,
+            "header_style": header_style,
+        }
+    )
 
 
 @app.route('/api/reference_lis/browse', methods=['GET'])
@@ -1388,7 +1954,10 @@ def browse_reference_lis():
 
         path = ""
         if sys.platform == "darwin":
-            script = f'set theFile to choose file with prompt "Select existing FTL.LIS" default location (POSIX file "{initial_dir}")\nPOSIX path of theFile'
+            # NOTE: Avoid strict type filters here; some macOS setups treat .LIS as generic data and
+            # the filter can hide valid files. We'll validate extension/content in Python below.
+            initial_escaped = str(initial_dir).replace('"', '\\"')
+            script = f'set theFile to choose file with prompt "Select existing FTL.LIS" default location (POSIX file "{initial_escaped}")\nPOSIX path of theFile'
             try:
                 result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
                 if result.returncode == 0:
@@ -1410,10 +1979,6 @@ def browse_reference_lis():
             )
             root.destroy()
 
-        if path:
-            return jsonify({"path": os.path.normpath(path)})
-        return jsonify({"path": None})
-
         if not path:
             return jsonify({"path": None})
 
@@ -1422,15 +1987,27 @@ def browse_reference_lis():
             return jsonify({"error": "File not found"}), 404
 
         # Validate it's parsable as FTL.LIS
-        parse_ftl_lis(p)
+        try:
+            _hv, _rc, entries = parse_ftl_lis(p)
+            entry_count = len(entries)
+            header_style = infer_header_style(p) or "unknown"
+        except Exception as e:
+            return jsonify({"error": f"Selected file is not a valid FTL.LIS: {e}"}), 400
 
         settings.setdefault("__generator", {})
         settings["__generator"]["reference_lis"] = str(p)
-        # Auto-set target directory to the folder containing this FTL.LIS.
-        settings["__generator"]["target_directory"] = str(p.parent)
+        settings["__generator"]["reference_lis_label"] = p.name
         _maybe_prune_settings(settings)
         update_paths()
-        return jsonify({"message": "Reference FTL.LIS selected", "path": str(p), "target_directory": str(p.parent)})
+        return jsonify(
+            {
+                "message": "Reference FTL.LIS selected",
+                "path": str(p),
+                "label": p.name,
+                "entry_count": entry_count,
+                "header_style": header_style,
+            }
+        )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -1441,8 +2018,328 @@ def clear_reference_lis():
     settings.setdefault("__generator", {})
     if "reference_lis" in settings["__generator"]:
         del settings["__generator"]["reference_lis"]
+    if "reference_lis_label" in settings["__generator"]:
+        del settings["__generator"]["reference_lis_label"]
     _maybe_prune_settings(settings)
     return jsonify(_load_generator_settings())
+
+@app.route('/api/reference_lis/entries', methods=['GET'])
+def get_reference_lis_entries():
+    """
+    UI helper: show the contents of the loaded reference FTL.LIS even when the user
+    hasn't selected a storage directory yet.
+    """
+    gen = _load_generator_settings()
+    ref = Path(gen.get("reference_lis", REFERENCE_FTL_LIS))
+    if not ref.exists():
+        return jsonify({"exists": False, "path": str(ref), "entries": []})
+
+    try:
+        _hv, _rc, entries = parse_ftl_lis(ref)
+        out = []
+        # Safety: cap payload size for very large playlists.
+        limit = 2000
+        for e in entries[:limit]:
+            try:
+                out.append(
+                    {
+                        "name": getattr(e, "name", ""),
+                        "v1": int(getattr(e, "v1", 0) or 0),
+                        "v2": int(getattr(e, "v2", 0) or 0),
+                        "crc": getattr(e, "crc_hex8", None),
+                    }
+                )
+            except Exception:
+                continue
+        return jsonify(
+            {
+                "exists": True,
+                "path": str(ref),
+                "entry_count": len(entries),
+                "returned": len(out),
+                "entries": out,
+            }
+        )
+    except Exception as e:
+        return jsonify({"exists": True, "path": str(ref), "error": str(e), "entries": []}), 400
+
+@app.route('/api/playlist', methods=['GET'])
+def playlist_get():
+    return jsonify(_playlist_snapshot())
+
+@app.route('/api/playlist/clear', methods=['POST'])
+def playlist_clear():
+    _playlist_clear()
+    return jsonify(_playlist_snapshot())
+
+@app.route('/api/playlist/load_reference', methods=['POST'])
+def playlist_load_reference_upload():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    f = request.files['file']
+    if not f.filename:
+        return jsonify({'error': 'Missing filename'}), 400
+
+    # Save to a temp file and parse. We keep only the entries in memory.
+    fd, tmp_path = tempfile.mkstemp(prefix="playlist_ref_", suffix=".LIS")
+    os.close(fd)
+    try:
+        f.save(tmp_path)
+        info = _playlist_set_from_reference(Path(tmp_path))
+        return jsonify({"message": "Reference playlist loaded", **info, **_playlist_snapshot()})
+    except Exception as e:
+        return jsonify({"error": f"Selected file is not a valid FTL.LIS: {e}"}), 400
+    finally:
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
+
+@app.route('/api/playlist/load_reference/browse', methods=['GET'])
+def playlist_load_reference_browse():
+    try:
+        settings = load_settings()
+        gen = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
+        initial = gen.get("playlist_output_directory") or gen.get("playlist_storage_directory") or gen.get("target_directory") or str(Path.home() / "Downloads")
+        path = ""
+        if sys.platform == "darwin":
+            initial_escaped = str(initial).replace('"', '\\"')
+            script = f'set theFile to choose file with prompt "Select existing FTL.LIS" default location (POSIX file "{initial_escaped}")\nPOSIX path of theFile'
+            result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
+            if result.returncode == 0:
+                path = (result.stdout or "").strip()
+        else:
+            if not HAS_TKINTER:
+                return jsonify({"error": "Tkinter not available on this server"}), 501
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes("-topmost", True)
+            path = filedialog.askopenfilename(
+                initialdir=initial,
+                title="Select existing FTL.LIS",
+                filetypes=[("FTL.LIS", "*.LIS;*.lis"), ("All files", "*.*")],
+            )
+            root.destroy()
+        if not path:
+            return jsonify({"path": None, **_playlist_snapshot()})
+        p = Path(path)
+        info = _playlist_set_from_reference(p)
+        return jsonify({"message": "Reference playlist loaded", "path": str(p), **info, **_playlist_snapshot()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/playlist/add_files', methods=['GET'])
+def playlist_add_files():
+    try:
+        settings = load_settings()
+        gen = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
+        downloads = (Path.home() / "Downloads").expanduser()
+        generated = downloads / "generated_file"
+        # Prefer the common output folder used by the generator (often contains extensionless .FTLV payloads).
+        if generated.exists() and generated.is_dir():
+            initial = str(generated)
+        else:
+            initial = (
+                gen.get("playlist_storage_directory")
+                or gen.get("default_output_directory")
+                or gen.get("target_directory")
+                or str(downloads)
+            )
+        paths = _pick_ftlv_files_dialog(initial_dir=str(initial))
+        added = 0
+        errors: list[dict] = []
+        for raw in paths:
+            res = _playlist_add_ftlv_path(Path(raw))
+            if res.get("ok"):
+                added += 1
+            else:
+                errors.append(res)
+        snap = _playlist_snapshot()
+        snap["added"] = added
+        snap["errors"] = errors[:20]
+        return jsonify(snap)
+    except Exception as e:
+        return jsonify({"error": str(e), **_playlist_snapshot()}), 500
+
+@app.route('/api/playlist/add_folder', methods=['GET'])
+def playlist_add_folder():
+    try:
+        settings = load_settings()
+        gen = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
+        initial = gen.get("playlist_storage_directory") or gen.get("target_directory") or str(Path.home() / "Downloads")
+        folder = _pick_folder_dialog(str(initial), title="Select folder containing .FTLV files")
+        if not folder:
+            return jsonify(_playlist_snapshot())
+        root = Path(folder)
+        added = 0
+        errors: list[dict] = []
+        # Scan for .ftlv files (cap to avoid accidental huge scans).
+        cap = 5000
+        count = 0
+        for dirpath, _dirnames, filenames in os.walk(root):
+            for fn in filenames:
+                if not fn.lower().endswith(".ftlv"):
+                    continue
+                count += 1
+                if count > cap:
+                    break
+                res = _playlist_add_ftlv_path(Path(dirpath) / fn)
+                if res.get("ok"):
+                    added += 1
+                else:
+                    errors.append(res)
+            if count > cap:
+                break
+        snap = _playlist_snapshot()
+        snap["added"] = added
+        snap["folder"] = str(root)
+        snap["errors"] = errors[:20]
+        if count > cap:
+            snap["warning"] = f"Folder scan capped at {cap} files"
+        return jsonify(snap)
+    except Exception as e:
+        return jsonify({"error": str(e), **_playlist_snapshot()}), 500
+
+@app.route('/api/playlist/toggle', methods=['POST'])
+def playlist_toggle_entry():
+    data = request.json or {}
+    name = os.path.basename(str(data.get("fileName") or ""))
+    enabled = bool(data.get("enabled", True))
+    if not name or name not in playlist_workspace["entries"]:
+        return jsonify({"error": "Entry not found", **_playlist_snapshot()}), 404
+    playlist_workspace["entries"][name]["enabled"] = enabled
+    return jsonify(_playlist_snapshot())
+
+@app.route('/api/playlist/remove', methods=['POST'])
+def playlist_remove_entry():
+    data = request.json or {}
+    name = os.path.basename(str(data.get("fileName") or ""))
+    if not name or name not in playlist_workspace["entries"]:
+        return jsonify({"error": "Entry not found", **_playlist_snapshot()}), 404
+    playlist_workspace["entries"].pop(name, None)
+    playlist_workspace["order"] = [n for n in (playlist_workspace.get("order") or []) if n != name]
+    return jsonify(_playlist_snapshot())
+
+@app.route('/api/playlist/reorder', methods=['POST'])
+def playlist_reorder():
+    data = request.json or {}
+    order = data.get("order", [])
+    if not isinstance(order, list):
+        return jsonify({"error": "Invalid order", **_playlist_snapshot()}), 400
+    cleaned: list[str] = []
+    seen = set()
+    for item in order:
+        name = os.path.basename(str(item or ""))
+        if not name or name in seen:
+            continue
+        if name in playlist_workspace["entries"]:
+            seen.add(name)
+            cleaned.append(name)
+    # Append any missing entries.
+    for name in playlist_workspace["entries"].keys():
+        if name not in seen:
+            cleaned.append(name)
+    playlist_workspace["order"] = cleaned
+    return jsonify(_playlist_snapshot())
+
+@app.route('/api/playlist/generate', methods=['POST'])
+def playlist_generate():
+    data = request.json or {}
+    output_dir = str(data.get("outputDir") or "").strip()
+    remember = bool(data.get("remember", False))
+    dont_ask_again = bool(data.get("dontAskAgain", remember))
+
+    if not output_dir:
+        return jsonify({"error": "Missing outputDir", **_playlist_snapshot()}), 400
+
+    try:
+        out_root = Path(output_dir).expanduser().resolve()
+    except Exception:
+        out_root = Path(output_dir).expanduser()
+    try:
+        out_root.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        return jsonify({"error": f"Could not create output directory: {e}", **_playlist_snapshot()}), 400
+
+    gen = _load_generator_settings()
+    header_style = str(gen.get("header_style", "count_fc"))
+    max_entries = int(gen.get("max_entries", 0))
+    header_used_slots = int(gen.get("header_used_slots", 0))
+    record_count = int(gen.get("record_count", 100))
+
+    order = [n for n in (playlist_workspace.get("order") or []) if n in playlist_workspace["entries"]]
+    enabled_names = [n for n in order if bool((playlist_workspace["entries"].get(n) or {}).get("enabled", True))]
+    effective_max = len(enabled_names) if header_style == "count_fc" else (max_entries if max_entries else len(enabled_names))
+    if record_count > 0:
+        effective_max = min(effective_max, record_count)
+    if header_style == "used_len" and header_used_slots > 0:
+        effective_max = min(effective_max, header_used_slots)
+    included = enabled_names[:effective_max] if effective_max else enabled_names
+
+    entries_out: list[FtlLisEntry] = []
+    for name in included:
+        e = playlist_workspace["entries"].get(name) or {}
+        # Prefer actual file metadata when we have a path, otherwise fall back to reference entry values.
+        v1 = int(e.get("v1", 0) or 0)
+        v2 = int(e.get("v2", 0) or 0)
+        crc = _safe_hex8(e.get("crc"))
+        p = str(e.get("path") or "")
+        if p:
+            fp = Path(p)
+            if fp.exists() and fp.is_file():
+                try:
+                    v1_u32, v2_u16, _ver = read_md_ftlv_meta(fp)
+                    v1 = int(v1_u32) & 0xFFFF
+                    v2 = int(v2_u16) & 0xFFFF
+                    crc = crc or default_crc_hex8_for_file(fp)
+                except Exception:
+                    pass
+        entries_out.append(
+            FtlLisEntry(
+                name=name,
+                marker=0x0200,
+                v1=v1 & 0xFFFF,
+                v2=v2 & 0xFFFF,
+                v3=1,
+                crc_hex8=_safe_hex8(crc) or "00000000",
+            )
+        )
+
+    header_slots: int | None = None
+    if header_style == "used_len" and header_used_slots > 0:
+        if len(entries_out) > header_used_slots:
+            entries_out = entries_out[:header_used_slots]
+        header_slots = header_used_slots
+
+    if record_count <= 0:
+        record_count = 100
+
+    data_bytes = build_ftl_lis(
+        entries_out,
+        record_count=record_count,
+        min_used_slots=7,
+        header_used_slots=header_slots,
+        header_style=header_style,
+    )
+    out_file = out_root / "FTL.LIS"
+    try:
+        _write_bytes_if_changed(str(out_file), data_bytes)
+    except Exception as e:
+        return jsonify({"error": f"Failed to write FTL.LIS: {e}", **_playlist_snapshot()}), 500
+
+    if remember:
+        settings = load_settings()
+        settings.setdefault("__generator", {})
+        settings["__generator"]["playlist_output_directory"] = str(out_root)
+        settings["__generator"]["playlist_prompt_output_each_time"] = (not bool(dont_ask_again))
+        _maybe_prune_settings(settings)
+        update_paths()
+
+    snap = _playlist_snapshot()
+    snap["message"] = "FTL.LIS generated"
+    snap["outputFile"] = str(out_file)
+    snap["generatedEntries"] = len(entries_out)
+    return jsonify(snap)
 
 @app.route('/api/generate', methods=['POST'])
 def generate_ftl():
@@ -1595,14 +2492,62 @@ def set_generator_settings():
         gen["merge_mode"] = bool(data["merge_mode"])
     if "reference_lis" in data and data["reference_lis"]:
         gen["reference_lis"] = str(data["reference_lis"])
+    if "default_output_directory" in data:
+        gen["default_output_directory"] = str(data["default_output_directory"])
+        # Keep legacy key aligned.
+        gen["target_directory"] = str(data["default_output_directory"])
+    # Per-tab folders. Accept both new and legacy keys.
+    if "playlist_storage_directory" in data:
+        gen["playlist_storage_directory"] = str(data["playlist_storage_directory"])
+    if "playlist_output_directory" in data:
+        gen["playlist_output_directory"] = str(data["playlist_output_directory"])
+    if "playlist_prompt_output_each_time" in data:
+        gen["playlist_prompt_output_each_time"] = bool(data["playlist_prompt_output_each_time"])
+    if "filegen_output_directory" in data:
+        gen["filegen_output_directory"] = str(data["filegen_output_directory"])
+    if "mp4ftlv_output_directory" in data:
+        gen["mp4ftlv_output_directory"] = str(data["mp4ftlv_output_directory"])
+    if "storage_directory" in data:
+        gen["playlist_storage_directory"] = str(data["storage_directory"])
+        gen["storage_directory"] = str(data["storage_directory"])
     if "target_directory" in data:
+        gen["default_output_directory"] = str(data["target_directory"])
         gen["target_directory"] = str(data["target_directory"])
-    if "playlist_order" in data:
-        gen["playlist_order"] = _sanitize_playlist_order(data.get("playlist_order", []), _list_media_files())
+
+    # Shared default across tabs: by default, when any tab updates its output directory,
+    # sync that as the shared default for all tabs. Clients can opt out by sending:
+    #   { "sync_default_output": false }
+    sync_default = bool(data.get("sync_default_output", True))
+    shared = None
+    if "default_output_directory" in data:
+        shared = str(data.get("default_output_directory") or "").strip()
+    elif "target_directory" in data:
+        shared = str(data.get("target_directory") or "").strip()
+    elif "playlist_output_directory" in data:
+        shared = str(data.get("playlist_output_directory") or "").strip()
+    elif "filegen_output_directory" in data:
+        shared = str(data.get("filegen_output_directory") or "").strip()
+    elif "mp4ftlv_output_directory" in data:
+        shared = str(data.get("mp4ftlv_output_directory") or "").strip()
+
+    if sync_default and shared:
+        gen["default_output_directory"] = shared
+        gen["target_directory"] = shared
+        gen["playlist_output_directory"] = shared
+        gen["filegen_output_directory"] = shared
+        gen["mp4ftlv_output_directory"] = shared
 
     settings["__generator"] = gen
     _maybe_prune_settings(settings)
     update_paths()
+    # playlist_order depends on which storage dir is active, so sanitize after update_paths().
+    if "playlist_order" in data:
+        settings = load_settings()
+        gen = settings.get("__generator", {})
+        gen["playlist_order"] = _sanitize_playlist_order(data.get("playlist_order", []), _list_media_files())
+        settings["__generator"] = gen
+        _maybe_prune_settings(settings)
+        update_paths()
     return jsonify(_load_generator_settings())
 
 
@@ -1610,12 +2555,41 @@ def set_generator_settings():
 def browse_directory():
     try:
         settings = load_settings()
-        initial = settings.get("__generator", {}).get("target_directory") or str(Path.home() / "Downloads")
+        mode = str(request.args.get("mode", "playlist_output") or "playlist_output").lower().strip()
+        gen = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
+        downloads = str(Path.home() / "Downloads")
+
+        if mode == "default_output":
+            initial = (
+                gen.get("default_output_directory")
+                or gen.get("target_directory")
+                or gen.get("playlist_output_directory")
+                or gen.get("filegen_output_directory")
+                or downloads
+            )
+            prompt = "Select Default Output Folder (used across tabs)"
+        elif mode == "playlist_storage":
+            initial = gen.get("playlist_storage_directory") or gen.get("storage_directory") or gen.get("target_directory") or downloads
+            prompt = "Select Playlist Storage Folder (where .FTLV files are)"
+        elif mode == "playlist_output":
+            initial = gen.get("playlist_output_directory") or gen.get("target_directory") or downloads
+            prompt = "Select Playlist Output Folder (where FTL.LIS will be saved)"
+        elif mode == "filegen_output":
+            initial = gen.get("filegen_output_directory") or downloads
+            prompt = "Select File Generator Output Folder"
+        elif mode == "mp4ftlv_output":
+            initial = gen.get("mp4ftlv_output_directory") or gen.get("filegen_output_directory") or downloads
+            prompt = "Select MP4→FTLV Output Folder"
+        else:
+            initial = gen.get("playlist_output_directory") or gen.get("target_directory") or downloads
+            prompt = "Select Folder"
         initial = initial if os.path.isdir(initial) else str(Path.home() / "Downloads")
         directory = ""
 
         if sys.platform == "darwin":
-            script = f'set theFolder to choose folder with prompt "Select Target Storage Directory" default location (POSIX file "{initial}")\nPOSIX path of theFolder'
+            initial_escaped = str(initial).replace('"', '\\"')
+            prompt_escaped = str(prompt).replace('"', '\\"')
+            script = f'set theFolder to choose folder with prompt "{prompt_escaped}" default location (POSIX file "{initial_escaped}")\nPOSIX path of theFolder'
             try:
                 result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
                 if result.returncode == 0:
@@ -1630,7 +2604,7 @@ def browse_directory():
             root.withdraw()  # Hide main window
             root.attributes("-topmost", True) # Bring to front
             
-            directory = filedialog.askdirectory(initialdir=initial, title="Select Target Storage Directory")
+            directory = filedialog.askdirectory(initialdir=initial, title=prompt)
             root.destroy()
             
         if directory:

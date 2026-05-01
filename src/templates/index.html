@@ -15,57 +15,254 @@
             --border: #334155;
             --danger: #ef4444;
             --success: #10b981;
+
+            --shell-bg: radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 28%),
+                linear-gradient(180deg, #0b1120 0%, #0f172a 100%);
+            --sidebar-bg: rgba(7, 12, 26, 0.92);
+            --sidebar-border: rgba(148, 163, 184, 0.12);
+            --topbar-bg: rgba(15, 23, 42, 0.72);
+            --topbar-border: rgba(148, 163, 184, 0.1);
+            --card-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.96));
+            --card-border: rgba(148, 163, 184, 0.14);
+            --card-shadow: 0 20px 50px rgba(2, 6, 23, 0.26);
+            --panel-bg: rgba(255,255,255,0.03);
+            --panel-border: rgba(148, 163, 184, 0.14);
+            --field-bg: rgba(11, 18, 34, 0.9);
+            --field-border: rgba(148, 163, 184, 0.18);
+            --secondary-bg: rgba(255,255,255,0.06);
+            --secondary-border: rgba(255,255,255,0.12);
+            --secondary-hover: rgba(255,255,255,0.1);
+            --header-row-min: 104px;
+
+            --nav-active-bg: rgba(59, 130, 246, 0.12);
+            --nav-active-border: rgba(96, 165, 250, 0.25);
+            --nav-active-text: #dbeafe;
+            --nav-text: var(--text-dim);
+        }
+
+        html[data-theme="light"] {
+            --bg: #f5f7fb;
+            --surface: #ffffff;
+            --primary: #2563eb;
+            --accent: #7c3aed;
+            --text: #0f172a;
+            --text-dim: #475569;
+            --border: #dbe2ef;
+            --danger: #dc2626;
+            --success: #059669;
+
+            --shell-bg: radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 30%),
+                linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+            --sidebar-bg: rgba(255, 255, 255, 0.85);
+            --sidebar-border: rgba(15, 23, 42, 0.10);
+            --topbar-bg: rgba(255, 255, 255, 0.75);
+            --topbar-border: rgba(15, 23, 42, 0.10);
+            --card-bg: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+            --card-border: rgba(15, 23, 42, 0.10);
+            --card-shadow: 0 18px 40px rgba(2, 6, 23, 0.08);
+            --panel-bg: rgba(15, 23, 42, 0.03);
+            --panel-border: rgba(15, 23, 42, 0.10);
+            --field-bg: rgba(255,255,255,0.95);
+            --field-border: rgba(15, 23, 42, 0.12);
+            --secondary-bg: rgba(15, 23, 42, 0.04);
+            --secondary-border: rgba(15, 23, 42, 0.10);
+            --secondary-hover: rgba(15, 23, 42, 0.06);
+            --header-row-min: 104px;
+
+            --nav-active-bg: rgba(37, 99, 235, 0.10);
+            --nav-active-border: rgba(37, 99, 235, 0.20);
+            --nav-active-text: #0f172a;
+            --nav-text: #334155;
         }
 
         body {
             font-family: 'Outfit', 'Inter', sans-serif;
-            background-color: var(--bg);
+            background: var(--shell-bg);
             color: var(--text);
             margin: 0;
-            padding: 2rem;
+            padding: 0;
             min-height: 100vh;
         }
 
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .header h1 {
+            max-width: none;
             margin: 0;
-            font-size: 2rem;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+        }
+
+        .app-shell {
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--sidebar-border);
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .sidebar-brand {
+            min-height: var(--header-row-min);
+            padding: 0.75rem 0.9rem;
+            border-bottom: 1px solid var(--topbar-border);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .sidebar-logo img {
+            width: 200px;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 0;
+            background: transparent;
+            border: 0;
+            padding: 0;
+        }
+
+        .sidebar-brand h1 {
+            margin: 0;
+            font-size: 1.45rem;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #93c5fd, #c4b5fd 55%, #f0abfc);
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
+        .sidebar-brand p {
+            margin: 0.45rem 0 0;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .sidebar-nav {
+            padding: 1.25rem 1rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 1rem 1rem 1.25rem;
+            border-top: 1px solid var(--topbar-border);
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .main-shell {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 2rem 1rem;
+            min-height: var(--header-row-min);
+            border-bottom: 1px solid var(--topbar-border);
+            background: var(--topbar-bg);
+            backdrop-filter: blur(16px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .topbar-copy {
+            min-width: 0;
+        }
+
+        .topbar-kicker {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #93c5fd;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+        }
+
+        .topbar h2 {
+            margin: 0;
+            font-size: 1.85rem;
+            letter-spacing: -0.03em;
+        }
+
+        .topbar p {
+            margin: 0.35rem 0 0;
+            color: var(--text-dim);
+            font-size: 0.92rem;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .topbar-actions .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .section-head-copy {
+            min-width: 0;
+        }
+
+        .section-head-actions {
+            display: flex;
+            gap: 0.65rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .content-area {
+            padding: 1.75rem 2rem 2.5rem;
+        }
+
         .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1.15rem;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            box-shadow: var(--card-shadow);
         }
 
         .upload-zone {
-            border: 2px dashed var(--border);
+            border: 2px dashed var(--field-border);
             border-radius: 0.75rem;
             padding: 3rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(255,255,255,0.02);
+            background: var(--panel-bg);
         }
 
         .upload-zone:hover {
@@ -86,8 +283,8 @@
             gap: 1.5rem;
             align-items: center;
             padding: 1.25rem;
-            background: #111827;
-            border: 1px solid var(--border);
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
             border-radius: 0.75rem;
             transition: border-color 0.2s;
         }
@@ -123,8 +320,8 @@
         }
 
         input, select {
-            background: var(--bg);
-            border: 1px solid var(--border);
+            background: var(--field-bg);
+            border: 1px solid var(--field-border);
             color: var(--text);
             padding: 0.5rem;
             border-radius: 0.4rem;
@@ -144,15 +341,26 @@
         .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
 
         .btn-tab {
+            width: 100%;
             background: transparent;
-            color: var(--text-dim);
-            border: 1px solid var(--border);
-            padding: 0.6rem 1.5rem;
+            color: var(--nav-text);
+            border: 1px solid transparent;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.8rem;
+            border-radius: 0.95rem;
+            font-size: 0.95rem;
         }
         .btn-tab.active {
-            background: var(--surface);
-            color: var(--primary);
-            border-color: var(--primary);
+            background: var(--nav-active-bg);
+            color: var(--nav-active-text);
+            border-color: var(--nav-active-border);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+        .btn-tab.active .icon {
+            opacity: 1;
         }
 
         .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
@@ -210,22 +418,95 @@
         .task-list {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
+            gap: 0.9rem;
+            margin-top: 0;
         }
 
         .task-item {
-            background: #111827;
-            border: 1px solid var(--border);
-            border-radius: 0.75rem;
+            background: var(--card-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 1rem;
+            padding: 1.1rem 1.15rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+
+        .settings-panel {
+            display: none;
+            background: rgba(255,255,255,0.05);
             padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(59, 130, 246, 0.18);
+        }
+
+        .settings-panel.open {
+            display: block;
+        }
+
+        .settings-panel-grid {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .selection-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .loaded-topbar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.9rem;
+            padding: 0.9rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 1rem;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            flex-wrap: wrap;
+        }
+
+        .loaded-topbar.open {
+            display: flex;
+        }
+
+        .loaded-topbar-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            min-width: 0;
+        }
+
+        .loaded-topbar-title {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .loaded-topbar-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+
+        .loaded-topbar-actions {
+            display: flex;
+            gap: 0.65rem;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         .task-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
         }
 
         .task-files {
@@ -233,32 +514,169 @@
             color: var(--text-dim);
         }
 
+        .history-shell {
+            display: none;
+        }
+
+        .history-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .history-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .history-kicker {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            font-weight: 700;
+        }
+
+        .history-title {
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .history-panel {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.14);
+        }
+
+        .history-panel.open {
+            display: block;
+        }
+
+        .history-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .history-empty {
+            margin: 0;
+        }
+
+        .task-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            font-weight: 700;
+        }
+
+        .task-main {
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+        }
+
+        .task-title-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .task-primary {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            min-width: 0;
+        }
+
+        .task-primary-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            word-break: break-word;
+        }
+
+        .task-subtle {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            word-break: break-word;
+        }
+
+        .task-stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+        }
+
+        .task-saved-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            margin-top: 0.65rem;
+        }
+
+        .task-saved-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.8rem 0.9rem;
+            border-radius: 0.8rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .task-saved-row .btn-secondary {
+            flex-shrink: 0;
+        }
+
         /* Toast Notification */
         .toast {
             position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
+            top: 1.25rem;
+            right: 1.25rem;
+            transform: translateY(-20px);
             background: var(--surface);
             border: 1px solid var(--primary);
             color: var(--text);
-            padding: 0.75rem 1.5rem;
-            border-radius: 99px;
+            padding: 0.85rem 1rem;
+            border-radius: 0.9rem;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             z-index: 1000;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.25s ease;
             opacity: 0;
             display: flex;
             align-items: center;
             gap: 10px;
             pointer-events: none;
+            width: min(360px, calc(100vw - 2.5rem));
         }
         .toast.error {
             border-color: rgba(239, 68, 68, 0.6);
             background: #2a1520;
         }
         .toast.visible {
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0);
             opacity: 1;
         }
         .toast-icon {
@@ -267,6 +685,55 @@
         }
         .toast.error .toast-icon {
             color: #fecaca;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            background: rgba(2, 6, 23, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 1100;
+        }
+        [data-theme="light"] .modal-overlay {
+            background: rgba(15, 23, 42, 0.22);
+        }
+        .modal-card {
+            width: min(720px, 100%);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45);
+            padding: 1.15rem 1.15rem 1rem;
+        }
+        .modal-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.85rem;
+        }
+        .modal-title {
+            font-weight: 800;
+            font-size: 1.15rem;
+            letter-spacing: -0.02em;
+        }
+        .modal-subtitle {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin-top: 0.2rem;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.6rem;
+            margin-top: 1rem;
+            padding-top: 0.9rem;
+            border-top: 1px solid var(--border);
         }
         .task-error-box {
             margin-top: 0.6rem;
@@ -357,6 +824,27 @@
             justify-content: center;
             align-items: center;
             min-height: 520px;
+            position: relative;
+        }
+        html[data-theme="light"] .player-screen {
+            background: rgba(15, 23, 42, 0.04);
+            border-color: rgba(15, 23, 42, 0.10);
+        }
+        .player-placeholder {
+            position: absolute;
+            inset: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 0.6rem;
+            color: var(--text-dim);
+            pointer-events: none;
+        }
+        .player-placeholder strong {
+            color: var(--text);
+            font-size: 1.05rem;
         }
         .player-screen img {
             width: 100%;
@@ -379,11 +867,60 @@
         }
         .player-row .spacer { flex: 1; }
         .btn-secondary {
-            background: rgba(255,255,255,0.06);
+            background: var(--secondary-bg);
             color: var(--text);
-            border: 1px solid rgba(255,255,255,0.12);
+            border: 1px solid var(--secondary-border);
         }
-        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+        .btn-secondary:hover { background: var(--secondary-hover); }
+
+        .icon {
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            flex: 0 0 auto;
+            opacity: 0.9;
+        }
+        html:not([data-theme="light"]) .icon {
+            filter: invert(1);
+        }
+
+        @media (max-width: 900px) {
+            .app-shell {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+                height: auto;
+                border-right: 0;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+            }
+
+            .topbar {
+                padding: 1.2rem 1rem 0.9rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .topbar-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .content-area {
+                padding: 1rem 1rem 2rem;
+            }
+
+            .history-bar,
+            .history-toolbar,
+            .task-title-row,
+            .task-saved-row,
+            .section-head,
+            .loaded-topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
 
     </style>
 
@@ -391,70 +928,142 @@
 <body>
 
 <div id="toast" class="toast">
-        <span class="toast-icon">✓</span>
-    <span id="toastMsg">File Updated</span>
+	        <span class="toast-icon">✓</span>
+	    <span id="toastMsg">File Updated</span>
 </div>
 
-<div class="container">
-
-    <div class="header">
-        <div>
-            <h1>Hologram Fan Manager Pro</h1>
-            <p style="color: var(--text-dim); margin-top: 0.25rem;">Manage your Playlist and Device Settings</p>
+<div id="playlistGenerateModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closePlaylistGenerateModal()">
+    <div class="modal-card">
+        <div class="modal-head">
+            <div>
+                <div class="modal-title">Generate FTL.LIS</div>
+                <div class="modal-subtitle">Choose where to save the generated playlist file.</div>
+            </div>
+            <button class="btn-secondary" type="button" onclick="closePlaylistGenerateModal()">Close</button>
         </div>
-        <div style="display: flex; gap: 1rem;">
-            <button class="btn-tab active" id="tabFileGen" onclick="switchTab('filegen')">File Generator</button>
-            <button class="btn-tab" id="tabPlaylist" onclick="switchTab('playlist')">Playlist</button>
-            <button class="btn-tab" id="tabPlayer" onclick="switchTab('player')">Player</button>
-            <button class="btn-tab" id="tabConfig" onclick="switchTab('config')">Device Settings</button>
-            <button class="btn-primary" onclick="loadFiles()">Refresh</button>
+        <div class="modal-body">
+            <label style="display:block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.4rem;">Output Folder</label>
+            <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+                <input type="text" id="playlistModalOutputDir" placeholder="e.g. /Volumes/FAN_STORAGE" style="flex:1; min-width: 260px; padding: 0.75rem 0.9rem; border-radius: 10px; border: 1px solid var(--border); background: var(--field-bg); color: var(--text);">
+                <button class="btn-secondary" type="button" onclick="browsePlaylistModalOutputDir()" style="white-space:nowrap;">
+                    <img class="icon" src="/static/icons/folder-upload.svg" alt="">Change Path
+                </button>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" type="button" onclick="closePlaylistGenerateModal()">Cancel</button>
+            <button class="btn-primary" type="button" onclick="playlistSubmitGenerate()">Submit</button>
         </div>
     </div>
+</div>
+
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-logo">
+                <img src="/static/logo.webp" alt="Naitri">
+<!--                <h1>Hologram Fan Manager Pro</h1>-->
+            </div>
+<!--            <p>All core tools in one workspace for building files, playlists, previews, and device setup.</p>-->
+        </div>
+
+        <div class="sidebar-nav">
+            <button class="btn-tab active" id="tabFileGen" onclick="switchTab('filegen')"><img class="icon" src="/static/icons/generator.svg" alt="">Media File Generator</button>
+            <button class="btn-tab" id="tabMp4ToFtlv" onclick="switchTab('mp4ftlv')" style="display:none;">.mp4_to_.ftlv</button>
+            <button class="btn-tab" id="tabPlaylist" onclick="switchTab('playlist')"><img class="icon" src="/static/icons/playlist.svg" alt="">Playlist Manager</button>
+            <button class="btn-tab" id="tabPlayer" onclick="switchTab('player')"><img class="icon" src="/static/icons/player.svg" alt="">FTLV Player</button>
+            <button class="btn-tab" id="tabConfig" onclick="switchTab('config')"><img class="icon" src="/static/icons/settings.svg" alt="">Device Settings</button>
+        </div>
+
+        <div class="sidebar-footer">
+            Use the sidebar to move between workflows. Each screen keeps its own state and clear-screen behavior.
+        </div>
+    </aside>
+
+    <main class="main-shell">
+        <div class="topbar">
+            <div class="topbar-copy">
+<!--                <div class="topbar-kicker"></div>-->
+                <h2 id="workspaceTitle">Media File Generator</h2>
+                <p id="workspaceSubtitle">Convert MP4 and image assets into fan-playable FTLV files.</p>
+            </div>
+            <div class="topbar-actions">
+                <button class="btn-secondary" id="topbarUploadBtn" onclick="triggerTopbarUpload()" style="display:none;"><img class="icon" src="/static/icons/upload.svg" alt="">Upload Files</button>
+                <button class="btn-secondary" id="topbarUploadFolderBtn" onclick="triggerTopbarUploadFolder()" style="display:none;"><img class="icon" src="/static/icons/folder-upload.svg" alt="">Upload Folder</button>
+                <button class="btn-secondary" onclick="clearCurrentScreen()"><img class="icon" src="/static/icons/clear.svg" alt="">Clear Screen</button>
+                <button class="btn-secondary" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark mode"><img class="icon" id="themeToggleIcon" src="/static/icons/moon.svg" alt=""><span id="themeToggleText">Dark</span></button>
+                <button class="btn-primary" onclick="refreshCurrentView()"><img class="icon" src="/static/icons/refresh.svg" alt="">Refresh</button>
+            </div>
+        </div>
+
+        <div class="content-area">
 
     <!-- Playlist Tab Content -->
     <div id="sectionPlaylist" style="display: none;">
         <div class="card">
-            <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
-                <h3 style="margin: 0;">Click or Drop Local Media Files</h3>
-                <p style="color: var(--text-dim); font-size: 0.9rem;">Files will be uploaded to your local 'media' folder</p>
-                <input type="file" id="fileInput" multiple style="display: none;" onchange="handleUpload(event)">
-            </div>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-top: 0; margin-bottom: 1.5rem;">Current Playlist Entries</h3>
-            <div class="notice" id="genNotice">
-                Generator settings are loading...
-            </div>
-            <div style="display:flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
-                <div style="display:flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-                    <button class="btn-primary" onclick="document.getElementById('refLisInput').click()">Load Existing FTL.LIS</button>
-                    <input type="file" id="refLisInput" accept=".lis,.LIS" style="display:none;" onchange="uploadReferenceLis(event)">
-                    <button class="btn-secondary" onclick="browseReferenceLis()">Browse FTL.LIS</button>
-                    <button class="btn-danger" onclick="clearReferenceLis()">Clear Reference</button>
-                    <button class="btn-danger" onclick="clearPlaylistScreen()">Clear Screen</button>
-                    <div style="display:flex; gap: 0.5rem; align-items: center; color: var(--text-dim); font-size: 0.9rem;">
-                        <input type="checkbox" id="genMergeMode" checked onchange="saveGenerator()">
-                        <label for="genMergeMode" style="margin:0;">Merge into reference (append new)</label>
-                    </div>
-                </div>
-                <div id="refLisStatus" style="color: var(--text-dim); font-size: 0.85rem;">Reference: (loading)</div>
-            </div>
-
-            <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
-                <div class="input-group" style="margin-bottom: 0;">
-                    <label>Target Storage Directory</label>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="text" id="genTargetDir" placeholder="e.g. C:\HologramFiles" style="flex: 1; min-width: 200px;">
-                        <button class="btn-primary" style="width: 100px;" onclick="browseTargetDir()">Browse...</button>
-                        <button class="btn-primary" style="width: 120px;" onclick="saveGenerator()">Update Path</button>
-                    </div>
-
-                    <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.4rem;">
-                        Converted files go to <code>/media</code> and playlist to <code>FTL.LIS</code> inside this folder.
+            <div class="section-head">
+                <div class="section-head-copy">
+                    <h3 style="margin: 0;">Playlist Manager (FTL.LIS)</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-dim); margin: 0.75rem 0 0;">
+                        Load an existing <strong>FTL.LIS</strong> and/or open <strong>.FTLV</strong> files, then generate an updated <strong>FTL.LIS</strong>.
                     </p>
                 </div>
+                <div class="section-head-actions">
+                    <button class="btn-secondary" onclick="playlistAddFiles()"><img class="icon" src="/static/icons/upload.svg" alt="">Open Files</button>
+                    <button class="btn-secondary" onclick="document.getElementById('playlistRefLisInput').click()"><img class="icon" src="/static/icons/upload.svg" alt="">Load FTL.LIS</button>
+                    <input type="file" id="playlistRefLisInput" accept=".lis,.LIS" style="display:none;" onchange="playlistLoadReferenceUpload(event)">
+                    <button class="btn-secondary" id="btnPlaylistAdvanced" onclick="togglePlaylistAdvanced()"><img class="icon" src="/static/icons/tune.svg" alt="">Advanced</button>
+                    <button class="btn-secondary" onclick="playlistClear()"><img class="icon" src="/static/icons/clear.svg" alt="">Clear List</button>
+                    <button class="btn-primary" onclick="playlistSyncGenerate()"><img class="icon" src="/static/icons/generator.svg" alt="">Sync & Generate</button>
+                </div>
+            </div>
+
+            <div class="settings-panel" id="playlistAdvancedPanel">
+                <div class="notice" id="genNotice" style="margin-top:0;">
+                    Generator settings are loading...
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 1rem; margin-top: 1.25rem; align-items: end;">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Max Entries</label>
+                        <input type="number" id="genMaxEntries" value="0" min="0" step="1">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Header Style</label>
+                        <select id="genHeaderStyle">
+                            <option value="count_fc">count_fc</option>
+                            <option value="used_len">used_len</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Header Used Slots</label>
+                        <input type="number" id="genHeaderUsedSlots" value="7" min="1" step="1">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Total Slots</label>
+                        <input type="number" id="genRecordCount" value="100" min="1" step="1">
+                    </div>
+                    <div>
+                        <button class="btn-secondary" onclick="saveGenerator({ quiet: true })">Save</button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                    <div style="display:flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <div>
+                            <div style="font-weight: 700; margin-bottom: 0.25rem;">Output Settings</div>
+                            <div style="color: var(--text-dim); font-size: 0.85rem;">Set the default output folder for generated <strong>FTL.LIS</strong>.</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;">
+                        <input type="text" id="playlistDefaultOutputDir" placeholder="e.g. /Volumes/FAN_STORAGE" style="flex: 1; min-width: 260px;">
+                        <button class="btn-secondary" style="width: 160px;" onclick="browsePlaylistDefaultOutputDir()"><img class="icon" src="/static/icons/folder-upload.svg" alt="">Browse...</button>
+                        <button class="btn-secondary" style="width: 140px;" onclick="savePlaylistOutputSettings()">Save</button>
+                    </div>
+                </div>
+            </div>
+            <div id="refLisStatus" style="color: var(--text-dim); font-size: 0.85rem; margin: 0 0 1.25rem;">
+                Reference: (none loaded)
             </div>
 
             <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
@@ -470,114 +1079,202 @@
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 1rem; margin-bottom: 2rem; align-items: end;">
-
-                <div class="input-group" style="margin-bottom: 0;">
-                    <label>Max Entries</label>
-                    <input type="number" id="genMaxEntries" value="0" min="0" step="1">
-                </div>
-                <div class="input-group" style="margin-bottom: 0;">
-                    <label>Header Style</label>
-                    <select id="genHeaderStyle">
-                        <option value="count_fc">count_fc</option>
-                        <option value="used_len">used_len</option>
-                    </select>
-                </div>
-                <div class="input-group" style="margin-bottom: 0;">
-                    <label>Header Used Slots</label>
-                    <input type="number" id="genHeaderUsedSlots" value="7" min="1" step="1">
-                </div>
-                <div class="input-group" style="margin-bottom: 0;">
-                    <label>Total Slots</label>
-                    <input type="number" id="genRecordCount" value="100" min="1" step="1">
-                </div>
-                <div>
-                    <button class="btn-primary" onclick="saveGenerator()">Save</button>
-                </div>
-            </div>
+            <!-- Advanced generator controls moved under Advanced -->
             <div id="fileList" class="file-grid" style="display:none;">
                 <!-- Items injected here -->
             </div>
         </div>
 
-        <div class="card" style="text-align: center;">
-            <button class="btn-generate" onclick="generateAndDownload()">
-                Sync & Generate FTL.LIS
-            </button>
-        </div>
+        <!-- Sync & Generate moved to header -->
     </div>
 
     <!-- File Generator Tab Content -->
     <div id="sectionFileGen">
-        <div class="card">
-            <h3>Media Conversion (MP4 / Images → FTLV)</h3>
-            <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1rem;">
-                Select files to convert them into fan-playable <strong>FTLV</strong> format.
-            </p>
+        <div class="card" id="fileGenWorkspaceCard">
+            <div class="section-head">
+                <div class="section-head-copy">
+                    <h3 style="margin: 0;">Media Conversion (MP4 / Images → FTLV)</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-dim); margin: 0.75rem 0 0;">
+                        Select files to convert them into fan-playable <strong>FTLV</strong> format.
+                    </p>
+                </div>
+                <div class="section-head-actions">
+                    <button class="btn-secondary" type="button" id="btnFileGenSettings" onclick="toggleFileGenSettings()"><img class="icon" src="/static/icons/tune.svg" alt="">Settings</button>
+                    <button class="btn-secondary" type="button" onclick="browseTargetDirForFileGen()"><img class="icon" src="/static/icons/folder-upload.svg" alt="">Browse Folder</button>
+                    <button class="btn-secondary" type="button" id="btnFileGenHistoryMode" onclick="toggleFileGenHistoryMode()"><img class="icon" src="/static/icons/history.svg" alt="">History</button>
+                    <label style="display:flex; align-items:center; gap:0.5rem; color: var(--text-dim); font-size: 0.9rem;">
+                        <input type="checkbox" id="fileGenFtlvExtToggle" onchange="onFileGenFtlvToggleChange()">
+                        Generate file with <code>.ftlv</code> extension
+                    </label>
+                </div>
+            </div>
 
-            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-end;">
-                <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dim);">Visual Quality (JPEG)</label>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="range" id="convQuality" min="10" max="100" value="85" style="width: 150px;" oninput="document.getElementById('qVal').innerText = this.value">
-                        <span id="qVal" style="font-weight: bold; min-width: 30px;">85</span>
+            <div id="fileGenSettingsPanel" class="settings-panel">
+                <div class="settings-panel-grid">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dim);">Visual Quality (JPEG)</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="range" id="convQuality" min="10" max="100" value="85" style="width: 150px;" oninput="document.getElementById('qVal').innerText = this.value">
+                            <span id="qVal" style="font-weight: bold; min-width: 30px;">85</span>
+                        </div>
                     </div>
-                </div>
-                <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dim);">Playback Speed (FPS)</label>
-                    <select id="convFps" style="background: #222; color: #fff; border: 1px solid #444; padding: 5px 10px; border-radius: 5px;">
-                        <option value="10">10 FPS</option>
-                        <option value="15">15 FPS</option>
-                        <option value="20" selected>20 FPS</option>
-                    </select>
-                </div>
-                <div style="font-size: 0.8rem; color: var(--primary); max-width: 200px;">
-                    Higher quality/FPS = Larger file size and better visuals.
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dim);">Playback Speed (FPS)</label>
+                        <select id="convFps" style="background: #222; color: #fff; border: 1px solid #444; padding: 5px 10px; border-radius: 5px;">
+                            <option value="10">10 FPS</option>
+                            <option value="15">15 FPS</option>
+                            <option value="20" selected>20 FPS</option>
+                        </select>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--primary); max-width: 220px;">
+                        Higher quality/FPS = larger file size and better visuals.
+                    </div>
                 </div>
             </div>
             
             <div style="margin-bottom: 1.25rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
                 <div class="input-group" style="margin-bottom: 0;">
                     <label>Target Folder (where converted files are saved)</label>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="text" id="fileGenTargetDir" placeholder="e.g. C:\HologramFiles" style="flex: 1; min-width: 200px;">
-                        <button class="btn-primary" style="width: 100px;" onclick="browseTargetDirForFileGen()">Browse...</button>
-                        <button class="btn-primary" style="width: 140px;" onclick="saveTargetDirForFileGen()">Update Path</button>
-                    </div>
+                    <input type="text" id="fileGenTargetDir" placeholder="e.g. C:\HologramFiles" style="flex: 1; min-width: 200px;">
                     <div id="fileGenRuntimeNotice" class="notice" style="margin-top: 0.75rem;">
                         Conversion runtime status is loading...
                     </div>
                 </div>
             </div>
-            
+
+            <div id="fileGenLoadedBar" class="loaded-topbar">
+                <div class="loaded-topbar-copy">
+                    <div class="loaded-topbar-title" id="fileGenLoadedTitle">Files loaded</div>
+                    <div class="loaded-topbar-subtitle">Your selected files are ready. Add more or start conversion.</div>
+                </div>
+                <div class="loaded-topbar-actions">
+                    <button class="btn-primary" id="btnStartConversionTop" type="button" onclick="startConversion()">Start Conversion</button>
+                </div>
+            </div>
+
             <div class="upload-zone" id="genDropZone" onclick="document.getElementById('mediaInput').click()">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">🎬</div>
                 <h3 style="margin: 0;">Click or Drop Files to Select</h3>
-                <p style="color: var(--text-dim); font-size: 0.9rem;">Supports MP4, JPG, PNG, GIF</p>
+                <p id="fileGenDropZoneHint" style="color: var(--text-dim); font-size: 0.9rem;">Supports MP4, JPG, PNG, GIF</p>
                 <input type="file" id="mediaInput" accept="image/*,video/mp4" multiple style="display: none;" onchange="handleMediaSelect(event)">
+                <input type="file" id="mediaFolderInput" webkitdirectory directory multiple style="display:none;" onchange="handleMediaFolderSelect(event)">
             </div>
 
             <div id="selectionArea" style="display: none; margin-top: 1.5rem;">
-                <h4 style="margin-bottom: 1rem;">Pending Files</h4>
-                <div id="selectedFilesList" class="task-list" style="margin-bottom: 1.5rem;">
+                <div class="selection-toolbar">
+                    <h4 style="margin: 0;">Pending Files</h4>
+                </div>
+                <div id="selectedFilesList" class="task-list">
                     <!-- Selected files here -->
                 </div>
-                <button class="btn-generate" id="btnStartConversion" onclick="startConversion()">
-                    Start Conversion (0 files)
-                </button>
             </div>
         </div>
 
-        <div class="card" id="historyCard" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="margin: 0;">Conversion History</h3>
-                <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <button class="btn-secondary" id="btnHistoryFilter" onclick="toggleHistoryFilter()">Show Active</button>
-                    <button class="btn-primary" onclick="loadTasks()">Refresh History</button>
+        <div class="card history-shell" id="historyCard">
+            <div class="history-bar">
+                <div class="history-copy">
+                    <span class="history-kicker">Review</span>
+                    <div class="history-title">Conversion History</div>
+                </div>
+                <button class="btn-secondary" id="btnFileGenHistoryBack" type="button" onclick="setFileGenHistoryMode(false)" style="display:none;">Back to Upload</button>
+            </div>
+            <div id="historyCardBody" class="history-panel open">
+                <div class="history-toolbar">
+                    <div class="task-subtle">View recent conversions with cleaner spacing and saved output details.</div>
+                    <div class="history-actions">
+                        <button class="btn-secondary" id="btnHistoryFilter" onclick="toggleHistoryFilter()">Show Active</button>
+                        <button class="btn-primary" onclick="loadTasks()">Refresh History</button>
+                    </div>
+                </div>
+                <div id="taskList" class="task-list">
+                    <!-- Tasks here -->
                 </div>
             </div>
-            <div id="taskList" class="task-list">
-                <!-- Tasks here -->
+        </div>
+    </div>
+
+    <!-- Dedicated MP4 to FTLV Tab -->
+    <div id="sectionMp4ToFtlv" style="display: none;">
+        <div class="card">
+            <h3>.mp4_to_.ftlv</h3>
+            <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1rem;">
+                Select one or more <strong>MP4</strong> files and save them as <strong>.ftlv</strong> files without changing the current File Generator flow.
+            </p>
+
+            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-end;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dim);">Visual Quality (JPEG)</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="range" id="mp4FtlvQuality" min="10" max="100" value="85" style="width: 150px;" oninput="document.getElementById('mp4FtlvQVal').innerText = this.value">
+                        <span id="mp4FtlvQVal" style="font-weight: bold; min-width: 30px;">85</span>
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dim);">Playback Speed (FPS)</label>
+                    <select id="mp4FtlvFps" style="background: #222; color: #fff; border: 1px solid #444; padding: 5px 10px; border-radius: 5px;">
+                        <option value="10">10 FPS</option>
+                        <option value="15">15 FPS</option>
+                        <option value="20" selected>20 FPS</option>
+                    </select>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--primary); max-width: 240px;">
+                    Output is saved with the <code>.ftlv</code> extension in the selected folder.
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.25rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Target Folder (.ftlv output)</label>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <input type="text" id="mp4FtlvTargetDir" placeholder="e.g. C:\HologramFiles" style="flex: 1; min-width: 200px;">
+                        <button class="btn-primary" style="width: 100px;" onclick="browseMp4FtlvTargetDir()">Browse...</button>
+                    </div>
+                    <div id="mp4FtlvRuntimeNotice" class="notice" style="margin-top: 0.75rem;">
+                        Conversion runtime status is loading...
+                    </div>
+                </div>
+            </div>
+
+            <div id="mp4FtlvLoadedBar" class="loaded-topbar">
+                <div class="loaded-topbar-copy">
+                    <div class="loaded-topbar-title" id="mp4FtlvLoadedTitle">MP4 files loaded</div>
+                    <div class="loaded-topbar-subtitle">Your MP4 files are ready. Add more or generate fresh .ftlv output.</div>
+                </div>
+                <div class="loaded-topbar-actions">
+                    <button class="btn-primary" id="btnStartMp4FtlvConversionTop" type="button" onclick="startMp4FtlvConversion()">Generate .ftlv</button>
+                </div>
+            </div>
+
+            <div class="upload-zone" id="mp4FtlvDropZone" onclick="document.getElementById('mp4FtlvInput').click()">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📼</div>
+                <h3 style="margin: 0;">Click or Drop MP4 Files</h3>
+                <p style="color: var(--text-dim); font-size: 0.9rem;">Supports MP4 only. Output files will end with .ftlv</p>
+                <input type="file" id="mp4FtlvInput" accept=".mp4,video/mp4" multiple style="display: none;" onchange="handleMp4FtlvSelect(event)">
+                <input type="file" id="mp4FtlvFolderInput" webkitdirectory directory multiple style="display:none;" onchange="handleMp4FtlvFolderSelect(event)">
+            </div>
+
+            <div id="mp4FtlvSelectionArea" style="display: none; margin-top: 1.5rem;">
+                <h4 style="margin-bottom: 1rem;">Pending MP4 Files</h4>
+                <div id="mp4FtlvSelectedFilesList" class="task-list" style="margin-bottom: 1.5rem;"></div>
+            </div>
+        </div>
+
+        <div class="card history-shell" id="mp4FtlvHistoryCard">
+            <div class="history-bar">
+                <div class="history-copy">
+                    <span class="history-kicker">Review</span>
+                    <div class="history-title">.mp4_to_.ftlv History</div>
+                </div>
+                <button class="btn-secondary" id="btnMp4HistoryToggle" onclick="toggleHistoryPanel('mp4FtlvHistoryBody', 'btnMp4HistoryToggle', '.mp4_to_.ftlv History')">Open History</button>
+            </div>
+            <div id="mp4FtlvHistoryBody" class="history-panel">
+                <div class="history-toolbar">
+                    <div class="task-subtle">Track MP4 to FTLV jobs, progress, and the latest saved output path.</div>
+                    <div class="history-actions">
+                        <button class="btn-primary" onclick="loadMp4FtlvTasks()">Refresh History</button>
+                    </div>
+                </div>
+                <div id="mp4FtlvTaskList" class="task-list"></div>
             </div>
         </div>
     </div>
@@ -630,6 +1327,11 @@
                 </div>
 
                 <div class="player-screen">
+                    <div class="player-placeholder" id="playerPlaceholder">
+                        <img class="icon" src="/static/icons/player.svg" alt="" style="width:32px;height:32px;filter:none;">
+                        <strong>Select an FTLV file to preview</strong>
+                        <div>Use the dropdown or click Browse to open a file.</div>
+                    </div>
                     <img id="playerFrame" alt="FTLV frame preview" />
                 </div>
             </div>
@@ -670,6 +1372,8 @@
             </div>
         </div>
     </div>
+        </div>
+    </main>
 </div>
 
 <script>
@@ -714,6 +1418,11 @@
         el.style.color = isError ? '#fecaca' : '#fde68a';
     }
 
+    function setPlayerPlaceholderVisible(visible) {
+        const ph = document.getElementById('playerPlaceholder');
+        if (ph) ph.style.display = visible ? 'flex' : 'none';
+    }
+
     async function loadPlayableFiles() {
         stopPlayer();
         showPlayerNotice('Loading FTLV files...');
@@ -726,6 +1435,12 @@
             const files = await res.json();
             const playable = (files || []).filter(f => !f.parseError && f.fileName && f.mdVersion);
 
+            // Placeholder option so we don't auto-load the first file.
+            const ph = document.createElement('option');
+            ph.value = '';
+            ph.textContent = 'Select an FTLV file...';
+            sel.appendChild(ph);
+
             // External files first (if any)
             (playerExternalFiles || []).forEach(x => {
                 const opt = document.createElement('option');
@@ -737,6 +1452,7 @@
             if (playable.length === 0) {
                 if ((playerExternalFiles || []).length === 0) {
                     showPlayerNotice('No playable FTLV files found. Convert an MP4/Image first, then refresh.', true);
+                    setPlayerPlaceholderVisible(true);
                 } else {
                     showPlayerNotice('');
                 }
@@ -744,6 +1460,7 @@
                 playerInfo = null;
                 const img = document.getElementById('playerFrame');
                 if (img) img.removeAttribute('src');
+                setPlayerPlaceholderVisible(true);
                 document.getElementById('playerFrameLabel').textContent = 'Frame: - / -';
                 document.getElementById('playerMetaLabel').textContent = 'FPS: -';
                 const seek = document.getElementById('playerSeek');
@@ -759,11 +1476,14 @@
                 sel.appendChild(opt);
             });
 
-            playerCurrentFile = sel.value;
+            sel.value = '';
+            playerCurrentFile = null;
+            playerInfo = null;
             showPlayerNotice('');
-            await loadPlayerInfo(playerCurrentFile);
+            setPlayerPlaceholderVisible(true);
         } catch (e) {
             showPlayerNotice('Failed to load files: ' + e, true);
+            setPlayerPlaceholderVisible(true);
         }
     }
 
@@ -831,10 +1551,12 @@
             document.getElementById('playerMetaLabel').textContent = `FPS: ${fps ? fps.toFixed(2) : '-'}`;
             updatePlayerFrameLabel();
             showPlayerNotice('');
+            setPlayerPlaceholderVisible(false);
 
             await showPlayerFrame(0);
         } catch (e) {
             showPlayerNotice('Player error: ' + e, true);
+            setPlayerPlaceholderVisible(true);
         }
     }
 
@@ -856,6 +1578,7 @@
         updatePlayerFrameLabel();
 
         const img = document.getElementById('playerFrame');
+        setPlayerPlaceholderVisible(false);
         const q = (playerCurrentFile || '').startsWith('token:')
             ? (`token=${encodeURIComponent((playerCurrentFile || '').slice('token:'.length))}`)
             : (`name=${encodeURIComponent(playerCurrentFile)}`);
@@ -866,7 +1589,21 @@
         const sel = document.getElementById('playerFileSelect');
         if (!sel) return;
         playerCurrentFile = sel.value || null;
-        if (playerCurrentFile) loadPlayerInfo(playerCurrentFile);
+        if (playerCurrentFile) {
+            setPlayerPlaceholderVisible(false);
+            loadPlayerInfo(playerCurrentFile);
+        } else {
+            stopPlayer();
+            playerInfo = null;
+            const img = document.getElementById('playerFrame');
+            if (img) img.removeAttribute('src');
+            document.getElementById('playerFrameLabel').textContent = 'Frame: - / -';
+            document.getElementById('playerMetaLabel').textContent = 'FPS: -';
+            const seek = document.getElementById('playerSeek');
+            seek.max = '0';
+            seek.value = '0';
+            setPlayerPlaceholderVisible(true);
+        }
     }
 
     function onPlayerSpeedChange() {
@@ -956,11 +1693,13 @@
         document.getElementById('genHeaderStyle').value = cfg.header_style ?? 'count_fc';
         document.getElementById('genHeaderUsedSlots').value = cfg.header_used_slots ?? 7;
         document.getElementById('genRecordCount').value = cfg.record_count ?? 100;
-        document.getElementById('genMergeMode').checked = cfg.merge_mode ?? true;
-        document.getElementById('genTargetDir').value = cfg.target_directory ?? '';
+        const out = document.getElementById('playlistDefaultOutputDir');
+        if (out) out.value = cfg.playlist_output_directory ?? (cfg.target_directory ?? '');
         window.playlistOrder = Array.isArray(cfg.playlist_order) ? cfg.playlist_order.slice() : [];
         const fg = document.getElementById('fileGenTargetDir');
-        if (fg) fg.value = cfg.target_directory ?? '';
+        if (fg) fg.value = cfg.filegen_output_directory ?? (cfg.target_directory ?? '');
+        const mp4ExtDir = document.getElementById('mp4FtlvTargetDir');
+        if (mp4ExtDir) mp4ExtDir.value = cfg.mp4ftlv_output_directory ?? (cfg.filegen_output_directory ?? (cfg.target_directory ?? ''));
 
 
         const headerText = `${cfg.header_style}:${cfg.header_used_slots}`;
@@ -978,6 +1717,13 @@
             runtimeNotice.style.color = cfg.ffmpegAvailable ? 'var(--text)' : '#fecaca';
             runtimeNotice.style.background = cfg.ffmpegAvailable ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)';
         }
+        const mp4ExtNotice = document.getElementById('mp4FtlvRuntimeNotice');
+        if (mp4ExtNotice) {
+            mp4ExtNotice.textContent = ffmpegStatus;
+            mp4ExtNotice.style.borderColor = cfg.ffmpegAvailable ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.3)';
+            mp4ExtNotice.style.color = cfg.ffmpegAvailable ? 'var(--text)' : '#fecaca';
+            mp4ExtNotice.style.background = cfg.ffmpegAvailable ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)';
+        }
 
         const maxInput = document.getElementById('genMaxEntries');
         if (cfg.header_style === 'count_fc') {
@@ -989,25 +1735,6 @@
         }
     }
 
-    async function browseTargetDir() {
-        try {
-            const res = await fetch('/api/browse');
-            const data = await res.json();
-            if (data.path) {
-                document.getElementById('genTargetDir').value = data.path;
-                const fg = document.getElementById('fileGenTargetDir');
-                if (fg) fg.value = data.path;
-                // Auto-save after browsing
-                await saveGenerator({ quiet: true });
-                showToast('Target folder updated');
-            } else if (data.error) {
-                alert('Browse failed: ' + data.error);
-            }
-        } catch (e) {
-            alert('Browse failed: ' + e);
-        }
-    }
-
     async function saveGenerator(opts = { quiet: false }) {
 
         const headerStyle = document.getElementById('genHeaderStyle').value;
@@ -1015,9 +1742,7 @@
             max_entries: headerStyle === 'count_fc' ? 0 : parseInt(document.getElementById('genMaxEntries').value || '0', 10),
             header_style: headerStyle,
             header_used_slots: parseInt(document.getElementById('genHeaderUsedSlots').value || '7', 10),
-            record_count: parseInt(document.getElementById('genRecordCount').value || '100', 10),
-            merge_mode: document.getElementById('genMergeMode').checked,
-            target_directory: document.getElementById('genTargetDir').value.trim()
+            record_count: parseInt(document.getElementById('genRecordCount').value || '100', 10)
         };
 
         const res = await fetch('/api/generator', {
@@ -1030,113 +1755,722 @@
             return;
         }
         await loadGenerator();
-        await loadFiles();
         if (!opts?.quiet) alert('Generator settings saved');
     }
 
     async function browseTargetDirForFileGen() {
-        await browseTargetDir();
+        await browseFileGenTargetDir();
     }
 
-    async function saveTargetDirForFileGen() {
-        const fg = document.getElementById('fileGenTargetDir');
-        if (!fg) return;
-        document.getElementById('genTargetDir').value = fg.value.trim();
-        await saveGenerator({ quiet: true });
-        showToast('Target folder updated');
-    }
-
-    async function loadFiles() {
-        const res = await fetch('/api/files');
-        const files = await res.json();
-        window.playlistLastFiles = Array.isArray(files) ? files : [];
-        syncGeneratorMaxEntries(files);
-        syncSelection(files);
-        renderPlaylistOrder(files);
-        renderFileList(files);
-    }
-
-    async function loadReferenceLisStatus() {
+    async function browsePlaylistDefaultOutputDir() {
         try {
-            const res = await fetch('/api/reference_lis');
-            const info = await res.json();
-            if (!res.ok) {
-                document.getElementById('refLisStatus').textContent = `Reference: error (${info.error || 'unknown'})`;
-                return;
+            const res = await fetch('/api/browse?mode=default_output');
+            const data = await res.json();
+            if (data.path) {
+                const out = document.getElementById('playlistDefaultOutputDir');
+                if (out) out.value = data.path;
+                await savePlaylistOutputSettings({ quiet: true });
+            } else if (data.error) {
+                alert('Browse failed: ' + data.error);
             }
-            if (!info.exists) {
-                document.getElementById('refLisStatus').textContent = `Reference: none (${info.path})`;
-                return;
-            }
-            const count = info.entry_count ?? '?';
-            const style = info.header_style ?? 'unknown';
-            document.getElementById('refLisStatus').textContent = `Reference: ${count} entries (${style})`;
-        } catch (e) {
-            document.getElementById('refLisStatus').textContent = 'Reference: (failed to load)';
-        }
-    }
-
-    async function uploadReferenceLis(e) {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const form = new FormData();
-        form.append('file', file);
-        const res = await fetch('/api/reference_lis', { method: 'POST', body: form });
-        const body = await res.json().catch(() => ({}));
-        if (!res.ok) {
-            alert(body.error || 'Failed to load reference');
-            return;
-        }
-        // Note: browser upload cannot reveal the original directory path, so it cannot auto-set target dir.
-        // Use "Browse FTL.LIS" for that behavior.
-        await loadGenerator();
-        await loadReferenceLisStatus();
-        await loadFiles();
-        showToast(body.message || 'Reference FTL.LIS loaded');
-        // Reset input so selecting the same file again triggers change.
-        e.target.value = '';
-    }
-
-    async function browseReferenceLis() {
-        try {
-            const res = await fetch('/api/reference_lis/browse');
-            const body = await res.json().catch(() => ({}));
-            if (!res.ok) {
-                alert(body.error || 'Browse failed');
-                return;
-            }
-            if (!body.path) return;
-            await loadGenerator();
-            await loadReferenceLisStatus();
-            await loadFiles();
-            showToast('Reference selected (target dir auto-set)');
         } catch (e) {
             alert('Browse failed: ' + e);
         }
     }
 
-    async function clearReferenceLis() {
-        const res = await fetch('/api/reference_lis/clear', { method: 'POST' });
+    async function savePlaylistOutputSettings(opts = { quiet: false }) {
+        const out = document.getElementById('playlistDefaultOutputDir');
+        const payload = {
+            playlist_output_directory: (out?.value || '').trim()
+        };
+        const res = await fetch('/api/generator', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
         if (!res.ok) {
-            alert('Failed to clear reference');
+            showToast('Failed to save output settings', true);
             return;
         }
         await loadGenerator();
-        await loadReferenceLisStatus();
-        await loadFiles();
-        showToast('Reference cleared');
+        if (!opts?.quiet) showToast('Output settings saved');
+    }
+
+    async function browseFileGenTargetDir() {
+        try {
+            const res = await fetch('/api/browse?mode=default_output');
+            const data = await res.json();
+            if (data.path) {
+                const fg = document.getElementById('fileGenTargetDir');
+                if (fg) fg.value = data.path;
+                await saveFileGenOutputDir({ quiet: true });
+                showToast('Target folder updated');
+            } else if (data.error) {
+                alert('Browse failed: ' + data.error);
+            }
+        } catch (e) {
+            alert('Browse failed: ' + e);
+        }
+    }
+
+    async function saveTargetDirForFileGen() {
+        await saveFileGenOutputDir({ quiet: true });
+    }
+
+    async function saveFileGenOutputDir(opts = { quiet: false }) {
+        const fg = document.getElementById('fileGenTargetDir');
+        if (!fg) return;
+        const val = fg.value.trim();
+        const res = await fetch('/api/generator', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ filegen_output_directory: val })
+        });
+        if (!res.ok) {
+            showToast('Failed to save File Generator folder', true);
+            return;
+        }
+        await loadGenerator();
+        if (!opts?.quiet) showToast('File Generator folder saved');
+    }
+
+    // Playlist Manager (workspace-based, no "source folder" setting)
+    let playlistUiEntries = [];
+    let playlistUiOutputDir = '';
+    let playlistUiAskEachTime = true;
+    let playlistUiReferencePath = null;
+    // `playlistDragFile` is declared in the shared global state near the top of the script.
+
+    async function loadFiles() {
+        // Back-compat alias: playlist tab uses this name in a few places.
+        return await loadPlaylistWorkspace();
+    }
+
+    async function loadPlaylistWorkspace() {
+        try {
+            const res = await fetch('/api/playlist');
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                showToast(data.error || 'Failed to load playlist workspace', true);
+                return;
+            }
+            applyPlaylistSnapshot(data);
+        } catch (e) {
+            showToast('Failed to load playlist workspace', true);
+        }
+    }
+
+    function applyPlaylistSnapshot(data) {
+        playlistUiEntries = Array.isArray(data.entries) ? data.entries : [];
+        playlistUiOutputDir = String(data.outputDir || '');
+        playlistUiAskEachTime = !!data.askOutputEachTime;
+        playlistUiReferencePath = data.referencePath || null;
+        renderPlaylistWorkspace();
+
+        const status = document.getElementById('refLisStatus');
+        if (status) {
+            if (playlistUiReferencePath) {
+                const parts = String(playlistUiReferencePath).split('/').filter(Boolean);
+                const where = parts.length ? parts.slice(-2).join('/') : String(playlistUiReferencePath);
+                status.textContent = `Loaded FTL.LIS: ${where} · Working entries: ${playlistUiEntries.length}`;
+            } else {
+                status.textContent = `No FTL.LIS loaded · Working entries: ${playlistUiEntries.length}`;
+            }
+        }
+    }
+
+    function renderPlaylistWorkspace() {
+        const host = document.getElementById('playlistOrderList');
+        if (!host) return;
+        const list = Array.isArray(playlistUiEntries) ? playlistUiEntries : [];
+        if (list.length === 0) {
+            host.innerHTML = '<div class="notice" style="margin:0;">Use <strong>Open Files</strong> or <strong>Load FTL.LIS</strong> to start.</div>';
+            return;
+        }
+
+        const header = `
+            <div class="order-toolbar">
+                <div style="color: var(--text-dim); font-size: 0.9rem;">
+                    Showing <strong style="color: var(--text);">${list.length}</strong> entry(ies). Drag to reorder. Included entries will be written to <strong>FTL.LIS</strong>.
+                </div>
+            </div>
+        `;
+
+        host.innerHTML = header + list.map((e, i) => {
+            const name = escHtml(e.fileName || '');
+            const fileLit = JSON.stringify(String(e.fileName || ''));
+            const included = !!e.willBeIncluded;
+            const enabled = !!e.enabled;
+            const badge = enabled ? (included ? '<span class="status-badge badge-included">INCLUDED</span>' : '<span class="status-badge badge-skipped">SKIPPED</span>') : '<span class="status-badge badge-skipped">DISABLED</span>';
+            const src = escHtml(e.source || 'reference');
+            return `
+                <div
+                    class="order-item"
+                    draggable="true"
+                    data-file-name="${escHtml(e.fileName)}"
+                    ondragstart='onPlaylistDragStart(event, ${fileLit})'
+                    ondragend="onPlaylistDragEnd(event)"
+                    ondragover="onPlaylistDragOver(event)"
+                    ondragleave="onPlaylistDragLeave(event)"
+                    ondrop='onPlaylistDrop(event, ${fileLit})'
+                >
+                    <span class="order-index">${i + 1}</span>
+                    <div style="min-width:0; flex:1;">
+                        <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+                            <div style="font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 520px;">${name || '(unnamed)'}</div>
+                            ${badge}
+                        </div>
+                        <div style="margin-top: 0.25rem; color: var(--text-dim); font-size: 0.82rem;">Source: ${src}${e.path ? (' · ' + escHtml(String(e.path).split('/').slice(-2).join('/'))) : ''}</div>
+                    </div>
+                    <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+                        <label style="display:flex; gap:0.5rem; align-items:center; color: var(--text-dim); font-size:0.9rem;">
+                            <span>Enabled</span>
+                            <input type="checkbox" ${enabled ? 'checked' : ''} onchange='playlistToggleEnabled(${fileLit}, this.checked)'>
+                        </label>
+                        <button class="btn-danger" onclick='playlistRemoveEntry(${fileLit})'>Remove</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function onPlaylistDragStart(event, fileName) {
+        playlistDragFile = fileName;
+        const item = event.currentTarget;
+        if (item) item.classList.add('dragging');
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', fileName);
+        }
+    }
+
+    function onPlaylistDragEnd(event) {
+        playlistDragFile = null;
+        document.querySelectorAll('.order-item').forEach(el => {
+            el.classList.remove('dragging');
+            el.classList.remove('drop-target');
+        });
+    }
+
+    function onPlaylistDragOver(event) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        const item = event.currentTarget;
+        if (item) item.classList.add('drop-target');
+    }
+
+    function onPlaylistDragLeave(event) {
+        const item = event.currentTarget;
+        if (item) item.classList.remove('drop-target');
+    }
+
+    async function onPlaylistDrop(event, targetFileName) {
+        event.preventDefault();
+        const item = event.currentTarget;
+        if (item) item.classList.remove('drop-target');
+        const dragged = playlistDragFile || (event.dataTransfer ? event.dataTransfer.getData('text/plain') : '');
+        if (!dragged || !targetFileName || dragged === targetFileName) return;
+
+        const names = (playlistUiEntries || []).map(e => e.fileName);
+        const from = names.indexOf(dragged);
+        const to = names.indexOf(targetFileName);
+        if (from < 0 || to < 0) return;
+        names.splice(to, 0, names.splice(from, 1)[0]);
+
+        const res = await fetch('/api/playlist/reorder', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ order: names })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast(body.error || 'Failed to reorder', true);
+            return;
+        }
+        applyPlaylistSnapshot(body);
+    }
+
+    async function playlistAddFiles() {
+        const res = await fetch('/api/playlist/add_files');
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast(body.error || 'Failed to add files', true);
+            return;
+        }
+        applyPlaylistSnapshot(body);
+        const added = Number(body.added ?? 0) || 0;
+        const ignored = Array.isArray(body.errors) ? body.errors.length : 0;
+        if (added) showToast(`Added ${added} file(s)`);
+        else if (ignored) showToast('No FTLV files added (non-FTLV selections were ignored)', true);
+        else showToast('No files selected', true);
+    }
+
+    async function playlistAddFolder() {
+        const res = await fetch('/api/playlist/add_folder');
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast(body.error || 'Failed to add folder', true);
+            return;
+        }
+        applyPlaylistSnapshot(body);
+        if (body.added != null) showToast(`Added ${body.added} file(s)`);
+    }
+
+    async function playlistClear() {
+        const res = await fetch('/api/playlist/clear', { method: 'POST' });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast(body.error || 'Failed to clear', true);
+            return;
+        }
+        applyPlaylistSnapshot(body);
+        showToast('Playlist cleared');
+    }
+
+    async function playlistLoadReferenceUpload(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            const res = await fetch('/api/playlist/load_reference', { method: 'POST', body: form });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                alert(body.error || 'Failed to load FTL.LIS');
+                return;
+            }
+            applyPlaylistSnapshot(body);
+            showToast(body.message || 'FTL.LIS loaded');
+        } finally {
+            e.target.value = '';
+        }
+    }
+
+    async function playlistLoadReferenceBrowse() {
+        const res = await fetch('/api/playlist/load_reference/browse');
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast(body.error || 'Browse failed', true);
+            return;
+        }
+        applyPlaylistSnapshot(body);
+        if (body.path) showToast('FTL.LIS loaded');
+    }
+
+    async function playlistToggleEnabled(fileName, enabled) {
+        const res = await fetch('/api/playlist/toggle', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ fileName, enabled })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast(body.error || 'Failed to update', true);
+            return;
+        }
+        applyPlaylistSnapshot(body);
+    }
+
+    async function playlistRemoveEntry(fileName) {
+        const res = await fetch('/api/playlist/remove', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ fileName })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast(body.error || 'Failed to remove', true);
+            return;
+        }
+        applyPlaylistSnapshot(body);
+    }
+
+    async function resetPlaylistOrder() {
+        const names = (playlistUiEntries || []).map(e => e.fileName).filter(Boolean).slice().sort((a, b) => String(a).localeCompare(String(b)));
+        const res = await fetch('/api/playlist/reorder', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ order: names })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast(body.error || 'Failed to reset order', true);
+            return;
+        }
+        applyPlaylistSnapshot(body);
+        showToast('Order reset');
+    }
+
+    function openPlaylistGenerateModal(defaultDir) {
+        const overlay = document.getElementById('playlistGenerateModal');
+        const input = document.getElementById('playlistModalOutputDir');
+        if (input) input.value = defaultDir || '';
+        if (overlay) overlay.style.display = 'flex';
+        setTimeout(() => { try { input?.focus(); } catch {} }, 50);
+    }
+
+    function closePlaylistGenerateModal() {
+        const overlay = document.getElementById('playlistGenerateModal');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    async function browsePlaylistModalOutputDir() {
+        try {
+            const res = await fetch('/api/browse?mode=default_output');
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                showToast(data.error || 'Browse failed', true);
+                return;
+            }
+            if (!data.path) return;
+            const input = document.getElementById('playlistModalOutputDir');
+            if (input) {
+                input.value = data.path;
+                try { input.focus(); } catch {}
+            }
+        } catch (e) {
+            showToast('Browse failed', true);
+        }
+    }
+
+    async function playlistSyncGenerate() {
+        // Always re-fetch to ensure we have the latest default settings.
+        const res = await fetch('/api/playlist');
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast(body.error || 'Failed to prepare generation', true);
+            return;
+        }
+        applyPlaylistSnapshot(body);
+        if (!playlistUiEntries.length) {
+            showToast('No entries to generate', true);
+            return;
+        }
+        const dir = String(body.outputDir || '');
+        // Always ask for output folder when generating.
+        openPlaylistGenerateModal(dir || '');
+    }
+
+    async function playlistSubmitGenerate() {
+        const input = document.getElementById('playlistModalOutputDir');
+        const dir = (input?.value || '').trim();
+        if (!dir) {
+            showToast('Select an output folder', true);
+            return;
+        }
+        closePlaylistGenerateModal();
+        await playlistGenerate(dir);
+    }
+
+    async function playlistGenerate(outputDir) {
+        const res = await fetch('/api/playlist/generate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ outputDir, remember: false, dontAskAgain: false })
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast(body.error || 'Generation failed', true);
+            return;
+        }
+        applyPlaylistSnapshot(body);
+        await loadGenerator();
+        showToast(body.message || 'FTL.LIS generated');
+    }
+
+    function getActiveTabName() {
+        if (document.getElementById('tabPlaylist')?.classList.contains('active')) return 'playlist';
+        if (document.getElementById('tabFileGen')?.classList.contains('active')) return 'filegen';
+        if (document.getElementById('tabMp4ToFtlv')?.classList.contains('active')) return 'mp4ftlv';
+        if (document.getElementById('tabPlayer')?.classList.contains('active')) return 'player';
+        if (document.getElementById('tabConfig')?.classList.contains('active')) return 'config';
+        return 'playlist';
+    }
+
+    function refreshCurrentView() {
+        const tab = getActiveTabName();
+        if (tab === 'playlist') {
+            loadPlaylistWorkspace();
+            loadGenerator();
+            return;
+        }
+        if (tab === 'filegen') {
+            loadTasks();
+            return;
+        }
+        if (tab === 'mp4ftlv') {
+            loadMp4FtlvTasks();
+            return;
+        }
+        if (tab === 'player') {
+            loadPlayableFiles();
+            return;
+        }
+        if (tab === 'config') {
+            loadConfig();
+        }
+    }
+
+    function getTheme() {
+        const stored = localStorage.getItem('theme');
+        if (stored === 'light' || stored === 'dark') return stored;
+        return 'dark';
+    }
+
+    function applyTheme(theme) {
+        const t = theme === 'light' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('theme', t);
+        const text = document.getElementById('themeToggleText');
+        const icon = document.getElementById('themeToggleIcon');
+        if (text) text.textContent = t === 'light' ? 'Light' : 'Dark';
+        if (icon) icon.src = t === 'light' ? '/static/icons/sun.svg' : '/static/icons/moon.svg';
+    }
+
+    function toggleTheme() {
+        applyTheme(getTheme() === 'light' ? 'dark' : 'light');
+    }
+
+    function updateTopbarUploadButton() {
+        const btn = document.getElementById('topbarUploadBtn');
+        const folderBtn = document.getElementById('topbarUploadFolderBtn');
+        if (!btn || !folderBtn) return;
+        const tab = getActiveTabName();
+        const showForFileGen = tab === 'filegen' && pendingMediaFiles.length > 0 && !isFileGenHistoryMode();
+        const showForMp4 = tab === 'mp4ftlv' && mp4FtlvPendingFiles.length > 0;
+        const shouldShow = showForFileGen || showForMp4;
+        btn.style.display = shouldShow ? 'inline-flex' : 'none';
+        folderBtn.style.display = shouldShow ? 'inline-flex' : 'none';
+        btn.textContent = 'Upload Files';
+        folderBtn.textContent = 'Upload Folder';
+    }
+
+    function triggerTopbarUpload() {
+        const tab = getActiveTabName();
+        if (tab === 'filegen') {
+            document.getElementById('mediaInput')?.click();
+            return;
+        }
+        if (tab === 'mp4ftlv') {
+            document.getElementById('mp4FtlvInput')?.click();
+        }
+    }
+
+    function triggerTopbarUploadFolder() {
+        const tab = getActiveTabName();
+        if (tab === 'filegen') {
+            document.getElementById('mediaFolderInput')?.click();
+            return;
+        }
+        if (tab === 'mp4ftlv') {
+            document.getElementById('mp4FtlvFolderInput')?.click();
+        }
+    }
+
+    async function clearServerScreenState(scope) {
+        const res = await fetch('/api/clear_screen_state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scope })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to clear screen state');
+        }
     }
 
     async function clearPlaylistScreen() {
-        // UI-only reset (does not delete files on disk).
         try { selectedFiles.clear(); } catch {}
-        const list = document.getElementById('fileList');
-        if (list) list.innerHTML = '<p style="text-align:center; color: var(--text-dim);">Cleared. Click Refresh to load again.</p>';
-        const st = document.getElementById('refLisStatus');
-        if (st) st.textContent = 'Reference: (cleared on screen)';
+        try { window.playlistLastFiles = []; } catch {}
+        try { window.playlistOrder = []; } catch {}
+
         const fi = document.getElementById('fileInput');
         if (fi) fi.value = '';
-        showToast('Screen cleared');
+
+        const fileList = document.getElementById('fileList');
+        if (fileList) fileList.innerHTML = '<p style="text-align:center; color: var(--text-dim);">Cleared. Click Refresh to load again.</p>';
+
+        const playlistOrderList = document.getElementById('playlistOrderList');
+        if (playlistOrderList) playlistOrderList.innerHTML = '<div class="notice" style="margin:0;">Cleared. Click Refresh to load again.</div>';
+
+        const refLisStatus = document.getElementById('refLisStatus');
+        if (refLisStatus) refLisStatus.textContent = 'Reference: (cleared on screen)';
+    }
+
+    async function clearFileGenScreen() {
+        await clearServerScreenState('filegen');
+        pendingMediaFiles = [];
+
+        const mediaInput = document.getElementById('mediaInput');
+        if (mediaInput) mediaInput.value = '';
+
+        const taskList = document.getElementById('taskList');
+        if (taskList) taskList.innerHTML = '<div class="notice" style="margin:0;">Cleared. Click Refresh to load again.</div>';
+
+        const selectedFilesList = document.getElementById('selectedFilesList');
+        if (selectedFilesList) selectedFilesList.innerHTML = '';
+
+        const historyCard = document.getElementById('historyCard');
+        if (historyCard) historyCard.style.display = 'none';
+
+        const selectionArea = document.getElementById('selectionArea');
+        if (selectionArea) selectionArea.style.display = 'none';
+        const topbar = document.getElementById('fileGenLoadedBar');
+        if (topbar) topbar.classList.remove('open');
+        const dropZone = document.getElementById('genDropZone');
+        if (dropZone) dropZone.style.display = 'block';
+
+        const btnStartConversion = document.getElementById('btnStartConversion');
+        if (btnStartConversion) btnStartConversion.textContent = 'Start Conversion (0 files)';
+        const btnStartConversionTop = document.getElementById('btnStartConversionTop');
+        if (btnStartConversionTop) btnStartConversionTop.textContent = 'Start Conversion';
+        updateTopbarUploadButton();
+
+        const saved = document.getElementById('fileGenSavedPath');
+        if (saved) saved.textContent = '';
+    }
+
+    async function clearMp4FtlvScreen() {
+        await clearServerScreenState('mp4ftlv');
+        mp4FtlvPendingFiles = [];
+
+        const mp4FtlvInput = document.getElementById('mp4FtlvInput');
+        if (mp4FtlvInput) mp4FtlvInput.value = '';
+
+        const mp4TaskList = document.getElementById('mp4FtlvTaskList');
+        if (mp4TaskList) mp4TaskList.innerHTML = '<div class="notice" style="margin:0;">Cleared. Click Refresh to load again.</div>';
+
+        const mp4SelectedFilesList = document.getElementById('mp4FtlvSelectedFilesList');
+        if (mp4SelectedFilesList) mp4SelectedFilesList.innerHTML = '';
+
+        const mp4HistoryCard = document.getElementById('mp4FtlvHistoryCard');
+        if (mp4HistoryCard) mp4HistoryCard.style.display = 'none';
+
+        const mp4SelectionArea = document.getElementById('mp4FtlvSelectionArea');
+        if (mp4SelectionArea) mp4SelectionArea.style.display = 'none';
+        const topbar = document.getElementById('mp4FtlvLoadedBar');
+        if (topbar) topbar.classList.remove('open');
+        const dropZone = document.getElementById('mp4FtlvDropZone');
+        if (dropZone) dropZone.style.display = 'block';
+
+        const btnStartMp4FtlvConversion = document.getElementById('btnStartMp4FtlvConversion');
+        if (btnStartMp4FtlvConversion) btnStartMp4FtlvConversion.textContent = 'Generate .ftlv (0 files)';
+        const btnStartMp4FtlvConversionTop = document.getElementById('btnStartMp4FtlvConversionTop');
+        if (btnStartMp4FtlvConversionTop) btnStartMp4FtlvConversionTop.textContent = 'Generate .ftlv';
+        updateTopbarUploadButton();
+    }
+
+    async function clearPlayerScreen() {
+        await clearServerScreenState('player');
+        try { playerExternalFiles = []; } catch {}
+
+        stopPlayer();
+
+        const playerSelect = document.getElementById('playerFileSelect');
+        if (playerSelect) playerSelect.innerHTML = '';
+        const playerFrame = document.getElementById('playerFrame');
+        if (playerFrame) playerFrame.removeAttribute('src');
+        const playerSeek = document.getElementById('playerSeek');
+        if (playerSeek) {
+            playerSeek.max = '0';
+            playerSeek.value = '0';
+        }
+        const playerAudio = document.getElementById('playerAudio');
+        if (playerAudio) {
+            try { playerAudio.pause(); } catch {}
+            playerAudio.removeAttribute('src');
+        }
+        const playerFrameLabel = document.getElementById('playerFrameLabel');
+        if (playerFrameLabel) playerFrameLabel.textContent = 'Frame: - / -';
+        const playerMetaLabel = document.getElementById('playerMetaLabel');
+        if (playerMetaLabel) playerMetaLabel.textContent = 'FPS: -';
+        showPlayerNotice('');
+
+        playerCurrentFile = null;
+        playerInfo = null;
+        playerFrameIndex = 0;
+        playerPlaying = false;
+    }
+
+    async function clearCurrentScreen() {
+        const tab = getActiveTabName();
+        try {
+            if (tab === 'playlist') {
+                await clearPlaylistScreen();
+            } else if (tab === 'filegen') {
+                await clearFileGenScreen();
+            } else if (tab === 'mp4ftlv') {
+                await clearMp4FtlvScreen();
+            } else if (tab === 'player') {
+                await clearPlayerScreen();
+            } else {
+                showToast('Nothing to clear on this tab');
+                return;
+            }
+        } catch (e) {
+            alert('Clear screen failed: ' + e);
+            return;
+        }
+
+        showToast('Current tab cleared');
+    }
+
+    function toggleFileGenSettings() {
+        const panel = document.getElementById('fileGenSettingsPanel');
+        const button = document.getElementById('btnFileGenSettings');
+        if (!panel || !button) return;
+        const isOpen = panel.classList.toggle('open');
+        button.textContent = isOpen ? 'Hide Settings' : 'Settings';
+    }
+
+    function togglePlaylistAdvanced() {
+        const panel = document.getElementById('playlistAdvancedPanel');
+        const btn = document.getElementById('btnPlaylistAdvanced');
+        if (!panel || !btn) return;
+        const isOpen = panel.classList.toggle('open');
+        btn.innerHTML = `<img class="icon" src="/static/icons/tune.svg" alt="">${isOpen ? 'Hide Advanced' : 'Advanced'}`;
+    }
+
+    function toggleHistoryPanel(bodyId, buttonId, label) {
+        const body = document.getElementById(bodyId);
+        const button = document.getElementById(buttonId);
+        if (!body || !button) return;
+        const isOpen = body.classList.toggle('open');
+        button.textContent = isOpen ? `Hide ${label}` : `Open ${label}`;
+    }
+
+    function setHistoryPanelState(bodyId, buttonId, label, isOpen) {
+        const body = document.getElementById(bodyId);
+        const button = document.getElementById(buttonId);
+        if (!body || !button) return;
+        body.classList.toggle('open', !!isOpen);
+        button.textContent = isOpen ? `Hide ${label}` : `Open ${label}`;
+    }
+
+    function isFileGenHistoryMode() {
+        return document.getElementById('sectionFileGen')?.dataset.historyMode === 'open';
+    }
+
+    function setFileGenHistoryMode(isOpen) {
+        const section = document.getElementById('sectionFileGen');
+        const workspaceCard = document.getElementById('fileGenWorkspaceCard');
+        const historyCard = document.getElementById('historyCard');
+        const btn = document.getElementById('btnFileGenHistoryMode');
+        const backBtn = document.getElementById('btnFileGenHistoryBack');
+        if (!section || !workspaceCard || !historyCard || !btn) return;
+
+        section.dataset.historyMode = isOpen ? 'open' : 'closed';
+        workspaceCard.style.display = isOpen ? 'none' : 'block';
+        historyCard.style.display = 'block';
+        const historyBody = document.getElementById('historyCardBody');
+        if (historyBody) historyBody.classList.add('open');
+        btn.textContent = isOpen ? 'Back to Upload' : 'History';
+        if (backBtn) backBtn.style.display = isOpen ? 'inline-flex' : 'none';
+        updateTopbarUploadButton();
+    }
+
+    function toggleFileGenHistoryMode() {
+        setFileGenHistoryMode(!isFileGenHistoryMode());
     }
 
     function syncSelection(files) {
@@ -1525,35 +2859,37 @@
         loadFiles();
     }
 
-    // Simplified and robust Drag and Drop Logic
+    // (Legacy) Drag & drop upload zone for Playlist Manager was removed.
+    // Keep handlers guarded to avoid runtime errors when the element is not present.
     const dropZone = document.getElementById('dropZone');
-    
-    // Standard listeners for drag states
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
+    if (dropZone) {
+        // Standard listeners for drag states
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
 
     function preventDefaults (e) {
         e.preventDefault();
         e.stopPropagation();
     }
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            dropZone.style.borderColor = 'var(--primary)';
-            dropZone.style.background = 'rgba(59, 130, 246, 0.1)';
-        }, false);
-    });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.style.borderColor = 'var(--primary)';
+                dropZone.style.background = 'rgba(59, 130, 246, 0.1)';
+            }, false);
+        });
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            dropZone.style.borderColor = 'var(--border)';
-            dropZone.style.background = 'rgba(255,255,255,0.02)';
-        }, false);
-    });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.style.borderColor = 'var(--border)';
+                dropZone.style.background = 'rgba(255,255,255,0.02)';
+            }, false);
+        });
 
-    dropZone.addEventListener('drop', handleDrop, false);
+        dropZone.addEventListener('drop', handleDrop, false);
+    }
 
     function handleDrop(e) {
         let dt = e.dataTransfer;
@@ -1583,6 +2919,7 @@
             });
 
             if (res.ok) {
+                markPlaylistStorageSelected();
                 loadFiles();
             } else {
                 alert("Upload failed. Check if the server is running.");
@@ -1613,6 +2950,15 @@
         setTimeout(() => t.classList.remove('visible'), 3000);
     }
 
+    function isPlaylistStorageSelected() {
+        // Per-session: avoid sticky old folders across reloads.
+        return sessionStorage.getItem('playlist_storage_selected') === '1';
+    }
+
+    function markPlaylistStorageSelected() {
+        sessionStorage.setItem('playlist_storage_selected', '1');
+    }
+
     function escHtml(s) {
         return String(s ?? '').replace(/[&<>"']/g, (c) => ({
             '&': '&amp;',
@@ -1635,6 +2981,13 @@
                 ${details}
             </div>
         `;
+    }
+
+    function formatTaskTitle(task) {
+        const files = (task.files || []).map(f => f && f.original).filter(Boolean);
+        if (files.length === 0) return 'Untitled Conversion';
+        if (files.length === 1) return files[0];
+        return `${files[0]} +${files.length - 1} more`;
     }
 
     async function playHistoryPath(path, fileName) {
@@ -1696,21 +3049,67 @@
 
 
     // Tab Switching
+    function updateWorkspaceHeader(tab) {
+        const title = document.getElementById('workspaceTitle');
+        const subtitle = document.getElementById('workspaceSubtitle');
+        if (!title || !subtitle) return;
+
+        const copy = {
+            filegen: {
+                title: 'Media File Generator',
+                subtitle: 'Convert MP4 and image assets into fan-playable FTLV files.'
+            },
+            mp4ftlv: {
+                title: '.mp4_to_.ftlv',
+                subtitle: 'Create direct MP4-to-FTLV outputs in a separate focused workflow.'
+            },
+            playlist: {
+                title: 'Playlist Manager',
+                subtitle: 'Organize media order, merge with FTL.LIS, and control final playlist output.'
+            },
+            player: {
+                title: 'FTLV Player',
+                subtitle: 'Preview generated hologram files on desktop before copying them to the device.'
+            },
+            config: {
+                title: 'Device Settings',
+                subtitle: 'Manage the fan device identity, Wi-Fi configuration, and shared system settings.'
+            }
+        };
+
+        const content = copy[tab] || copy.filegen;
+        title.textContent = content.title;
+        subtitle.textContent = content.subtitle;
+    }
+
     function switchTab(tab) {
         document.getElementById('sectionPlaylist').style.display = tab === 'playlist' ? 'block' : 'none';
         document.getElementById('sectionFileGen').style.display = tab === 'filegen' ? 'block' : 'none';
+        document.getElementById('sectionMp4ToFtlv').style.display = tab === 'mp4ftlv' ? 'block' : 'none';
         document.getElementById('sectionPlayer').style.display = tab === 'player' ? 'block' : 'none';
         document.getElementById('sectionConfig').style.display = tab === 'config' ? 'block' : 'none';
         
         document.getElementById('tabPlaylist').classList.toggle('active', tab === 'playlist');
         document.getElementById('tabFileGen').classList.toggle('active', tab === 'filegen');
+        document.getElementById('tabMp4ToFtlv').classList.toggle('active', tab === 'mp4ftlv');
         document.getElementById('tabPlayer').classList.toggle('active', tab === 'player');
         document.getElementById('tabConfig').classList.toggle('active', tab === 'config');
+        updateWorkspaceHeader(tab);
+        if (tab !== 'filegen' && isFileGenHistoryMode()) {
+            setFileGenHistoryMode(false);
+        }
+        updateTopbarUploadButton();
 
+        if (tab === 'playlist') {
+            loadPlaylistWorkspace();
+        }
         if (tab === 'config') loadConfig();
         if (tab === 'filegen') {
             loadTasks();
-            autoRefreshTasks();
+            autoRefreshTasks(loadTasks);
+        } else if (tab === 'mp4ftlv') {
+            loadMp4FtlvTasks();
+            autoRefreshTasks(loadMp4FtlvTasks);
         } else {
             stopAutoRefresh();
         }
@@ -1718,17 +3117,40 @@
         if (tab === 'player') {
             stopAutoRefresh();
             loadPlayableFiles();
+            setPlayerPlaceholderVisible(true);
         } else {
             stopPlayer();
         }
     }
 
     let pendingMediaFiles = [];
+    let mp4FtlvPendingFiles = [];
+    let pendingFolderName = null;
+    let mp4FtlvPendingFolderName = null;
 
     function handleMediaSelect(e) {
         const files = Array.from(e.target.files || []);
+        e.target.value = '';
         if (files.length === 0) return;
         
+        pendingFolderName = null;
+        pendingMediaFiles = [...pendingMediaFiles, ...files];
+        renderSelectionList();
+    }
+
+    function _topFolderNameFromWebkitPath(files) {
+        for (const f of (files || [])) {
+            const p = f && (f.webkitRelativePath || '');
+            if (p && p.includes('/')) return p.split('/')[0] || null;
+        }
+        return null;
+    }
+
+    function handleMediaFolderSelect(e) {
+        const files = Array.from(e.target.files || []);
+        e.target.value = '';
+        if (files.length === 0) return;
+        pendingFolderName = _topFolderNameFromWebkitPath(files);
         pendingMediaFiles = [...pendingMediaFiles, ...files];
         renderSelectionList();
     }
@@ -1736,14 +3158,26 @@
     function renderSelectionList() {
         const area = document.getElementById('selectionArea');
         const list = document.getElementById('selectedFilesList');
-        const btn = document.getElementById('btnStartConversion');
+        const btnTop = document.getElementById('btnStartConversionTop');
+        const topbar = document.getElementById('fileGenLoadedBar');
+        const title = document.getElementById('fileGenLoadedTitle');
+        const dropZone = document.getElementById('genDropZone');
+        const toggle = document.getElementById('fileGenFtlvExtToggle');
         
         if (pendingMediaFiles.length === 0) {
             area.style.display = 'none';
+            if (topbar) topbar.classList.remove('open');
+            if (dropZone) dropZone.style.display = 'block';
+            updateTopbarUploadButton();
             return;
         }
 
         area.style.display = 'block';
+        if (topbar) topbar.classList.add('open');
+        if (dropZone) dropZone.style.display = 'none';
+        if (title) title.textContent = pendingMediaFiles.length === 1
+            ? `1 file loaded: ${pendingMediaFiles[0].name}`
+            : `${pendingMediaFiles.length} files loaded`;
         list.innerHTML = pendingMediaFiles.map((f, i) => `
             <div class="task-item" style="padding: 0.75rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1753,7 +3187,11 @@
             </div>
         `).join('');
 
-        btn.textContent = `Start Conversion (${pendingMediaFiles.length} files)`;
+        const usingFtlvExt = !!toggle?.checked;
+        if (btnTop) btnTop.textContent = usingFtlvExt
+            ? `Generate .ftlv (${pendingMediaFiles.length})`
+            : `Start Conversion (${pendingMediaFiles.length})`;
+        updateTopbarUploadButton();
     }
 
     function removePending(index) {
@@ -1765,26 +3203,53 @@
         if (pendingMediaFiles.length === 0) return;
         
         const btn = document.getElementById('btnStartConversion');
-        btn.disabled = true;
-        btn.textContent = "Uploading...";
+        const btnTop = document.getElementById('btnStartConversionTop');
+        const useFtlvExt = !!document.getElementById('fileGenFtlvExtToggle')?.checked;
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = "Uploading...";
+        }
+        if (btnTop) {
+            btnTop.disabled = true;
+            btnTop.textContent = 'Uploading...';
+        }
 
         const formData = new FormData();
         pendingMediaFiles.forEach(f => formData.append('file', f));
-        
         formData.append('quality', document.getElementById('convQuality').value);
         formData.append('fps', document.getElementById('convFps').value);
 
         try {
-            const res = await fetch('/api/convert_media_async', {
-                method: 'POST',
-                body: formData
-            });
+            let endpoint = '/api/convert_media_async';
+            if (useFtlvExt) {
+                const nonMp4 = pendingMediaFiles.filter(f => !/\.mp4$/i.test(f?.name || ''));
+                if (nonMp4.length) {
+                    alert('When ".ftlv extension" is enabled, only MP4 files are allowed.');
+                    showToast('Only MP4 allowed in .ftlv extension mode', true);
+                    return;
+                }
+                const outputDir = (document.getElementById('fileGenTargetDir')?.value || '').trim();
+                if (!outputDir) {
+                    alert('Select a target folder first');
+                    return;
+                }
+                formData.append('outputDir', outputDir);
+                if (pendingFolderName) formData.append('folderName', pendingFolderName);
+                endpoint = '/api/convert_mp4_ftlv_async';
+            }
+            if (!useFtlvExt && pendingFolderName) formData.append('folderName', pendingFolderName);
+
+            const res = await fetch(endpoint, { method: 'POST', body: formData });
             const data = await res.json();
             
             if (res.ok) {
+                if (isFileGenHistoryMode()) setFileGenHistoryMode(false);
+                pendingFolderName = null;
                 pendingMediaFiles = [];
                 renderSelectionList();
                 document.getElementById('historyCard').style.display = 'block';
+                document.getElementById('historyCardBody')?.classList.add('open');
+                autoRefreshTasks(loadTasks);
                 loadTasks();
                 const fg = document.getElementById('fileGenTargetDir');
                 const saved = document.getElementById('fileGenSavedPath');
@@ -1801,11 +3266,187 @@
             alert("Error connecting to server");
             showToast('Could not connect to the conversion server', true);
         } finally {
-            btn.disabled = false;
+            if (btn) btn.disabled = false;
+            if (btnTop) btnTop.disabled = false;
+            renderSelectionList();
+        }
+    }
+
+    function onFileGenFtlvToggleChange() {
+        const toggle = document.getElementById('fileGenFtlvExtToggle');
+        const mediaInput = document.getElementById('mediaInput');
+        const hint = document.getElementById('fileGenDropZoneHint');
+        const useFtlvExt = !!toggle?.checked;
+        if (mediaInput) {
+            mediaInput.accept = useFtlvExt ? 'video/mp4,.mp4' : 'image/*,video/mp4';
+        }
+        if (hint) {
+            hint.textContent = useFtlvExt
+                ? 'MP4 only. Output files will end with .ftlv'
+                : 'Supports MP4, JPG, PNG, GIF';
+        }
+        if (useFtlvExt) {
+            const before = pendingMediaFiles.length;
+            pendingMediaFiles = pendingMediaFiles.filter(f => /\.mp4$/i.test(f?.name || ''));
+            if (pendingMediaFiles.length !== before) {
+                showToast('Non-MP4 files removed (FTLV extension mode)', true);
+            }
+        }
+        renderSelectionList();
+    }
+
+    function handleMp4FtlvSelect(e) {
+        const files = Array.from(e.target.files || []).filter(f => /\.mp4$/i.test(f.name || ''));
+        e.target.value = '';
+        if (files.length === 0) return;
+        mp4FtlvPendingFolderName = null;
+        mp4FtlvPendingFiles = [...mp4FtlvPendingFiles, ...files];
+        renderMp4FtlvSelectionList();
+    }
+
+    function handleMp4FtlvFolderSelect(e) {
+        const files = Array.from(e.target.files || []).filter(f => /\.mp4$/i.test(f.name || ''));
+        e.target.value = '';
+        if (files.length === 0) return;
+        mp4FtlvPendingFolderName = _topFolderNameFromWebkitPath(files);
+        mp4FtlvPendingFiles = [...mp4FtlvPendingFiles, ...files];
+        renderMp4FtlvSelectionList();
+    }
+
+    function renderMp4FtlvSelectionList() {
+        const area = document.getElementById('mp4FtlvSelectionArea');
+        const list = document.getElementById('mp4FtlvSelectedFilesList');
+        const btnTop = document.getElementById('btnStartMp4FtlvConversionTop');
+        const topbar = document.getElementById('mp4FtlvLoadedBar');
+        const title = document.getElementById('mp4FtlvLoadedTitle');
+        const dropZone = document.getElementById('mp4FtlvDropZone');
+        if (!area || !list) return;
+
+        if (mp4FtlvPendingFiles.length === 0) {
+            area.style.display = 'none';
+            if (topbar) topbar.classList.remove('open');
+            if (dropZone) dropZone.style.display = 'block';
+            updateTopbarUploadButton();
+            return;
+        }
+
+        area.style.display = 'block';
+        if (topbar) topbar.classList.add('open');
+        if (dropZone) dropZone.style.display = 'none';
+        if (title) title.textContent = mp4FtlvPendingFiles.length === 1
+            ? `1 MP4 loaded: ${mp4FtlvPendingFiles[0].name}`
+            : `${mp4FtlvPendingFiles.length} MP4 files loaded`;
+        list.innerHTML = mp4FtlvPendingFiles.map((f, i) => `
+            <div class="task-item" style="padding: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.9rem;">${escHtml(f.name)} (${(f.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    <button class="btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;" onclick="removePendingMp4Ftlv(${i})">Remove</button>
+                </div>
+            </div>
+        `).join('');
+
+        if (btnTop) btnTop.textContent = `Generate .ftlv (${mp4FtlvPendingFiles.length})`;
+        updateTopbarUploadButton();
+    }
+
+    function removePendingMp4Ftlv(index) {
+        mp4FtlvPendingFiles.splice(index, 1);
+        renderMp4FtlvSelectionList();
+    }
+
+    async function browseMp4FtlvTargetDir() {
+        try {
+            const res = await fetch('/api/browse?mode=default_output');
+            const data = await res.json();
+            if (data.path) {
+                const input = document.getElementById('mp4FtlvTargetDir');
+                if (input) input.value = data.path;
+                await saveMp4FtlvOutputDir({ quiet: true });
+            } else if (data.error) {
+                alert('Browse failed: ' + data.error);
+            }
+        } catch (e) {
+            alert('Browse failed: ' + e);
+        }
+    }
+
+    async function saveMp4FtlvOutputDir(opts = { quiet: false }) {
+        const input = document.getElementById('mp4FtlvTargetDir');
+        if (!input) return;
+        const val = input.value.trim();
+        const res = await fetch('/api/generator', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ mp4ftlv_output_directory: val })
+        });
+        if (!res.ok) {
+            showToast('Failed to save .mp4_to_.ftlv folder', true);
+            return;
+        }
+        await loadGenerator();
+        if (!opts?.quiet) showToast('.mp4_to_.ftlv folder saved');
+    }
+
+    async function startMp4FtlvConversion() {
+        if (mp4FtlvPendingFiles.length === 0) return;
+
+        const btn = document.getElementById('btnStartMp4FtlvConversion');
+        const btnTop = document.getElementById('btnStartMp4FtlvConversionTop');
+        const targetInput = document.getElementById('mp4FtlvTargetDir');
+        const outputDir = (targetInput?.value || '').trim();
+        if (!outputDir) {
+            alert('Select a target folder first');
+            return;
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Uploading...';
+        }
+        if (btnTop) {
+            btnTop.disabled = true;
+            btnTop.textContent = 'Uploading...';
+        }
+
+        const formData = new FormData();
+        mp4FtlvPendingFiles.forEach(f => formData.append('file', f));
+        formData.append('quality', document.getElementById('mp4FtlvQuality').value);
+        formData.append('fps', document.getElementById('mp4FtlvFps').value);
+        formData.append('outputDir', outputDir);
+        if (mp4FtlvPendingFolderName) formData.append('folderName', mp4FtlvPendingFolderName);
+
+        try {
+            const res = await fetch('/api/convert_mp4_ftlv_async', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (res.ok) {
+                mp4FtlvPendingFolderName = null;
+                mp4FtlvPendingFiles = [];
+                renderMp4FtlvSelectionList();
+                document.getElementById('mp4FtlvHistoryCard').style.display = 'block';
+                setHistoryPanelState('mp4FtlvHistoryBody', 'btnMp4HistoryToggle', '.mp4_to_.ftlv History', true);
+                autoRefreshTasks(loadMp4FtlvTasks);
+                loadMp4FtlvTasks();
+                showToast('.ftlv generation started');
+            } else {
+                const message = [data.error, data.details].filter(Boolean).join('\n');
+                alert(message || 'Failed to start .ftlv generation');
+                showToast(data.error || 'Generation could not start', true);
+            }
+        } catch (err) {
+            alert('Error connecting to server');
+            showToast('Could not connect to the conversion server', true);
+        } finally {
+            if (btn) btn.disabled = false;
+            if (btnTop) btnTop.disabled = false;
+            renderMp4FtlvSelectionList();
         }
     }
 
     let taskRefreshInterval = null;
+    let taskRefreshLoader = null;
     let historyFilter = 'all'; // 'all' | 'active'
     const notifiedFailedTasks = new Set();
 
@@ -1816,9 +3457,12 @@
         loadTasks();
     }
 
-    function autoRefreshTasks() {
+    function autoRefreshTasks(loader = loadTasks) {
         if (taskRefreshInterval) return;
-        taskRefreshInterval = setInterval(loadTasks, 2000);
+        taskRefreshLoader = loader;
+        taskRefreshInterval = setInterval(() => {
+            if (typeof taskRefreshLoader === 'function') taskRefreshLoader();
+        }, 2000);
     }
 
     function stopAutoRefresh() {
@@ -1826,37 +3470,41 @@
             clearInterval(taskRefreshInterval);
             taskRefreshInterval = null;
         }
+        taskRefreshLoader = null;
     }
 
     async function loadTasks() {
         try {
-            const res = await fetch('/api/tasks');
+            const res = await fetch(`/api/tasks?_=${Date.now()}`, { cache: 'no-store' });
             const tasks = await res.json();
             
             const list = document.getElementById('taskList');
+            const card = document.getElementById('historyCard');
             const filteredTasks = (historyFilter === 'active')
                 ? (tasks || []).filter(t => t && (t.status === 'pending' || t.status === 'processing'))
                 : (tasks || []);
 
             if (filteredTasks.length > 0) {
-                document.getElementById('historyCard').style.display = 'block';
+                card.style.display = 'block';
             } else {
                 if (historyFilter === 'active') {
-                    document.getElementById('historyCard').style.display = 'block';
-                    list.innerHTML = '<div class="notice" style="margin:0;">No active conversions right now.</div>';
+                    card.style.display = 'block';
+                    list.innerHTML = '<div class="notice history-empty">No active conversions right now.</div>';
                     return;
                 }
+                card.style.display = 'none';
                 return;
             }
 
             list.innerHTML = filteredTasks.map(task => {
                 const isProcessing = task.status === 'processing';
                 const isDone = task.status === 'done';
-                const totalFiles = task.files ? task.files.length : 0;
                 const statusColor = isDone ? 'var(--success)' : (isProcessing ? 'var(--primary)' : 'var(--text-dim)');
                 const results = Array.isArray(task.results) ? task.results : [];
                 const okResults = results.filter(r => r && r.ok);
                 const failedResults = results.filter(r => r && !r.ok);
+                const title = formatTaskTitle(task);
+                const subtitle = (task.files || []).map(f => escHtml(f.original)).join(', ');
                 const savedItems = okResults
                     .map(r => {
                         const p = r.outputPath || (task.targetDirectory ? `${task.targetDirectory}\\${r.output}` : r.output);
@@ -1868,39 +3516,43 @@
                 return `
                     <div class="task-item">
                         <div class="task-header">
-                            <span style="font-size: 0.8rem; color: var(--text-dim);">Task ${task.id.substring(0,8)}</span>
+                            <span class="task-label">Task ${task.id.substring(0,8)}</span>
                             <span class="status-badge" style="background: ${statusColor}22; color: ${statusColor};">
                                 ${task.status.toUpperCase()}
                             </span>
                         </div>
-                        <div class="task-files">
-                            Files: ${(task.files || []).map(f => escHtml(f.original)).join(', ')}
-                        </div>
-                        ${task.targetDirectory ? `
-                            <div class="task-files" style="color: var(--text-dim);">
-                                Target: ${escHtml(task.targetDirectory)}
+                        <div class="task-main">
+                            <div class="task-title-row">
+                                <div class="task-primary">
+                                    <div class="task-primary-name">${escHtml(title)}</div>
+                                    <div class="task-subtle">${subtitle}</div>
+                                </div>
                             </div>
-                        ` : ''}
-                        ${isProcessing || isDone ? `
+                            ${task.targetDirectory ? `
+                            <div class="task-subtle">
+                                Saved to: ${escHtml(task.targetDirectory)}
+                            </div>
+                            ` : ''}
+                            ${isProcessing || isDone ? `
                             <div class="progress-container">
                                 <div class="progress-bar" style="width: ${task.progress}%"></div>
                             </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 0.25rem;">
+                            <div class="task-stats">
                                 <span>Progress: ${task.progress}%</span>
                                 <span>${task.okCount} Done, ${task.failCount} Failed</span>
                             </div>
                             ${isDone && savedItems.length ? `
-                                <div class="task-files" style="margin-top: 0.5rem;">
-                                    Saved:
-                                    <div style="margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div>
+                                    <div class="task-label" style="margin-top: 0.2rem;">Saved Outputs</div>
+                                    <div class="task-saved-list">
                                         ${savedItems.map(x => {
                                             const pLit = JSON.stringify(String(x.path || ''));
                                             const nLit = JSON.stringify(String(x.name || 'FTLV'));
                                             return `
-                                                <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: space-between;">
+                                                <div class="task-saved-row">
                                                     <div style="min-width: 0;">
-                                                        <div style="font-weight: 600;">🕘 ${escHtml(x.name)}</div>
-                                                        <div style="font-size: 0.75rem; color: var(--text-dim); word-break: break-all;">${escHtml(x.path)}</div>
+                                                        <div style="font-weight: 600;">${escHtml(x.name)}</div>
+                                                        <div class="task-subtle">${escHtml(x.path)}</div>
                                                     </div>
                                                     <button class="btn-secondary" style="padding: 6px 10px; font-size: 0.75rem;" onclick='playHistoryPath(${pLit}, ${nLit})'>▶ Play</button>
                                                 </div>
@@ -1910,11 +3562,12 @@
                                 </div>
                             ` : ''}
                             ${failedResults.length ? `
-                                <div style="margin-top: 0.5rem;">
+                                <div>
                                     ${failedResults.map(formatTaskError).join('')}
                                 </div>
                             ` : ''}
-                        ` : ''}
+                            ` : ''}
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1939,6 +3592,78 @@
             });
 
             // If tasks are processing, keep refreshing. If all done, we could slow down but interval is fine.
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function loadMp4FtlvTasks() {
+        try {
+            const res = await fetch(`/api/tasks?_=${Date.now()}`, { cache: 'no-store' });
+            const tasks = await res.json();
+            const list = document.getElementById('mp4FtlvTaskList');
+            const card = document.getElementById('mp4FtlvHistoryCard');
+            if (!list || !card) return;
+
+            const filtered = (tasks || []).filter(t => t && t.taskType === 'mp4_to_ftlv_ext');
+            if (filtered.length === 0) {
+                card.style.display = 'none';
+                return;
+            }
+            card.style.display = 'block';
+
+            list.innerHTML = filtered.map(task => {
+                const isProcessing = task.status === 'processing';
+                const isDone = task.status === 'done';
+                const statusColor = isDone ? 'var(--success)' : (isProcessing ? 'var(--primary)' : 'var(--text-dim)');
+                const results = Array.isArray(task.results) ? task.results : [];
+                const okResults = results.filter(r => r && r.ok);
+                const failedResults = results.filter(r => r && !r.ok);
+                const title = formatTaskTitle(task);
+                const subtitle = (task.files || []).map(f => escHtml(f.original)).join(', ');
+                return `
+                    <div class="task-item">
+                        <div class="task-header">
+                            <span class="task-label">Task ${task.id.substring(0,8)}</span>
+                            <span class="status-badge" style="background: ${statusColor}22; color: ${statusColor};">${task.status.toUpperCase()}</span>
+                        </div>
+                        <div class="task-main">
+                            <div class="task-title-row">
+                                <div class="task-primary">
+                                    <div class="task-primary-name">${escHtml(title)}</div>
+                                    <div class="task-subtle">${subtitle}</div>
+                                </div>
+                            </div>
+                            <div class="task-subtle">Saved to: ${escHtml(task.targetDirectory || '')}</div>
+                            ${isProcessing || isDone ? `
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: ${task.progress}%"></div>
+                            </div>
+                            <div class="task-stats">
+                                <span>Progress: ${task.progress}%</span>
+                                <span>${task.okCount} Done, ${task.failCount} Failed</span>
+                            </div>
+                        ` : ''}
+                        ${okResults.length ? `
+                            <div>
+                                <div class="task-label" style="margin-top: 0.2rem;">Saved Outputs</div>
+                                <div class="task-saved-list">
+                                    ${okResults.map(r => `
+                                        <div class="task-saved-row">
+                                            <div style="min-width: 0;">
+                                                <div style="font-weight: 600;">${escHtml(r.output || 'FTLV')}</div>
+                                                <div class="task-subtle">${escHtml(r.outputPath || r.output || '')}</div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${failedResults.length ? `<div>${failedResults.map(formatTaskError).join('')}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         } catch (err) {
             console.error(err);
         }
@@ -1973,9 +3698,9 @@
 
     // Initial Load
     loadGenerator();
-    loadReferenceLisStatus();
-    loadFiles();
     switchTab('filegen');
+    onFileGenFtlvToggleChange();
+    applyTheme(getTheme());
 </script>
 
 </body>
