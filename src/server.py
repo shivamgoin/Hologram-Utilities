@@ -1262,12 +1262,9 @@ def convert_media_async():
     if not files:
         return jsonify({'error': 'No file provided'}), 400
 
-    settings = load_settings()
-    gen = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
-    downloads = Path.home() / "Downloads"
     output_dir_raw = str(request.form.get("outputDir", "") or "").strip()
     if not output_dir_raw:
-        output_dir_raw = str(gen.get("filegen_output_directory") or downloads)
+        return jsonify({'error': 'Missing outputDir (select a target folder)'}), 400
 
     try:
         output_root = Path(output_dir_raw).expanduser().resolve()
@@ -1513,12 +1510,7 @@ def convert_mp4_ftlv_async():
 
     output_dir_raw = str(request.form.get('outputDir', '') or '').strip()
     if not output_dir_raw:
-        try:
-            settings = load_settings()
-            gen = settings.get("__generator", {}) if isinstance(settings.get("__generator", {}), dict) else {}
-            output_dir_raw = str(gen.get("mp4ftlv_output_directory") or (Path.home() / "Downloads"))
-        except Exception:
-            output_dir_raw = str(Path.home() / "Downloads")
+        return jsonify({'error': 'Missing outputDir (select a target folder)'}), 400
 
     try:
         output_root = Path(output_dir_raw).expanduser().resolve()

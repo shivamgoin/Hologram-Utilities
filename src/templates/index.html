@@ -957,6 +957,31 @@
     </div>
 </div>
 
+<div id="outputDirModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeOutputDirModal()">
+    <div class="modal-card">
+        <div class="modal-head">
+            <div>
+                <div class="modal-title" id="outputDirModalTitle">Choose Output Folder</div>
+                <div class="modal-subtitle" id="outputDirModalSubtitle">Select where output files should be saved.</div>
+            </div>
+            <button class="btn-secondary" type="button" onclick="closeOutputDirModal()">Close</button>
+        </div>
+        <div class="modal-body">
+            <label style="display:block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.4rem;">Output Folder</label>
+            <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+                <input type="text" id="outputDirModalInput" placeholder="e.g. /Volumes/FAN_STORAGE" style="flex:1; min-width: 260px; padding: 0.75rem 0.9rem; border-radius: 10px; border: 1px solid var(--border); background: var(--field-bg); color: var(--text);">
+                <button class="btn-secondary" type="button" onclick="browseOutputDirModal()" style="white-space:nowrap;">
+                    <img class="icon" src="/static/icons/folder-upload.svg" alt="">Change Path
+                </button>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" type="button" onclick="closeOutputDirModal()">Cancel</button>
+            <button class="btn-primary" type="button" onclick="submitOutputDirModal()">Continue</button>
+        </div>
+    </div>
+</div>
+
 <div class="app-shell">
     <aside class="sidebar">
         <div class="sidebar-brand">
@@ -2133,6 +2158,68 @@
         }
     }
 
+    // Shared output-directory modal (used by all generators/converters)
+    let outputDirModalSubmit = null; // (dir: string) => void
+    let outputDirModalCancel = null; // () => void
+
+    function openOutputDirModal(opts = {}) {
+        const overlay = document.getElementById('outputDirModal');
+        const input = document.getElementById('outputDirModalInput');
+        const title = document.getElementById('outputDirModalTitle');
+        const subtitle = document.getElementById('outputDirModalSubtitle');
+        if (title) title.textContent = opts.title || 'Choose Output Folder';
+        if (subtitle) subtitle.textContent = opts.subtitle || 'Select where output files should be saved.';
+        if (input) input.value = (opts.defaultDir || '').trim();
+        outputDirModalSubmit = typeof opts.onSubmit === 'function' ? opts.onSubmit : null;
+        outputDirModalCancel = typeof opts.onCancel === 'function' ? opts.onCancel : null;
+        if (overlay) overlay.style.display = 'flex';
+        setTimeout(() => { try { input?.focus(); } catch {} }, 50);
+    }
+
+    function closeOutputDirModal() {
+        const overlay = document.getElementById('outputDirModal');
+        if (overlay) overlay.style.display = 'none';
+        const cancel = outputDirModalCancel;
+        outputDirModalSubmit = null;
+        outputDirModalCancel = null;
+        try { cancel && cancel(); } catch {}
+    }
+
+    async function browseOutputDirModal() {
+        try {
+            const res = await fetch('/api/browse?mode=default_output');
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                showToast(data.error || 'Browse failed', true);
+                return;
+            }
+            if (!data.path) return;
+            const input = document.getElementById('outputDirModalInput');
+            if (input) {
+                input.value = data.path;
+                try { input.focus(); } catch {}
+            }
+        } catch (e) {
+            showToast('Browse failed', true);
+        }
+    }
+
+    function submitOutputDirModal() {
+        const input = document.getElementById('outputDirModalInput');
+        const dir = (input?.value || '').trim();
+        if (!dir) {
+            showToast('Select an output folder', true);
+            return;
+        }
+        const fn = outputDirModalSubmit;
+        closeOutputDirModal();
+        try {
+            fn && fn(dir);
+        } catch (e) {
+            showToast('Could not start: ' + (e?.message || e), true);
+        }
+    }
+
     async function playlistSyncGenerate() {
         // Always re-fetch to ensure we have the latest default settings.
         const res = await fetch('/api/playlist');
@@ -3201,7 +3288,18 @@
 
     async function startConversion() {
         if (pendingMediaFiles.length === 0) return;
-        
+
+        const existing = (document.getElementById('fileGenTargetDir')?.value || '').trim();
+        openOutputDirModal({
+            title: 'Choose Target Folder',
+            subtitle: 'Select where converted files should be saved.',
+            defaultDir: existing,
+            onCancel: () => showToast('Cancelled'),
+            onSubmit: (dir) => { startConversionWithOutputDir(dir); }
+        });
+    }
+
+    async function startConversionWithOutputDir(outputDir) {
         const btn = document.getElementById('btnStartConversion');
         const btnTop = document.getElementById('btnStartConversionTop');
         const useFtlvExt = !!document.getElementById('fileGenFtlvExtToggle')?.checked;
@@ -3218,6 +3316,11 @@
         pendingMediaFiles.forEach(f => formData.append('file', f));
         formData.append('quality', document.getElementById('convQuality').value);
         formData.append('fps', document.getElementById('convFps').value);
+        formData.append('outputDir', (outputDir || '').trim());
+
+        // Keep the visible input in sync (but we still prompt every time).
+        const fgTarget = document.getElementById('fileGenTargetDir');
+        if (fgTarget) fgTarget.value = (outputDir || '').trim();
 
         try {
             let endpoint = '/api/convert_media_async';
@@ -3228,12 +3331,6 @@
                     showToast('Only MP4 allowed in .ftlv extension mode', true);
                     return;
                 }
-                const outputDir = (document.getElementById('fileGenTargetDir')?.value || '').trim();
-                if (!outputDir) {
-                    alert('Select a target folder first');
-                    return;
-                }
-                formData.append('outputDir', outputDir);
                 if (pendingFolderName) formData.append('folderName', pendingFolderName);
                 endpoint = '/api/convert_mp4_ftlv_async';
             }
@@ -3390,14 +3487,22 @@
     async function startMp4FtlvConversion() {
         if (mp4FtlvPendingFiles.length === 0) return;
 
+        const existing = (document.getElementById('mp4FtlvTargetDir')?.value || '').trim();
+        openOutputDirModal({
+            title: 'Choose Target Folder',
+            subtitle: 'Select where generated .ftlv files should be saved.',
+            defaultDir: existing,
+            onCancel: () => showToast('Cancelled'),
+            onSubmit: (dir) => { startMp4FtlvConversionWithOutputDir(dir); }
+        });
+    }
+
+    async function startMp4FtlvConversionWithOutputDir(outputDir) {
         const btn = document.getElementById('btnStartMp4FtlvConversion');
         const btnTop = document.getElementById('btnStartMp4FtlvConversionTop');
+        const output = (outputDir || '').trim();
         const targetInput = document.getElementById('mp4FtlvTargetDir');
-        const outputDir = (targetInput?.value || '').trim();
-        if (!outputDir) {
-            alert('Select a target folder first');
-            return;
-        }
+        if (targetInput) targetInput.value = output;
 
         if (btn) {
             btn.disabled = true;
@@ -3412,7 +3517,7 @@
         mp4FtlvPendingFiles.forEach(f => formData.append('file', f));
         formData.append('quality', document.getElementById('mp4FtlvQuality').value);
         formData.append('fps', document.getElementById('mp4FtlvFps').value);
-        formData.append('outputDir', outputDir);
+        formData.append('outputDir', output);
         if (mp4FtlvPendingFolderName) formData.append('folderName', mp4FtlvPendingFolderName);
 
         try {
