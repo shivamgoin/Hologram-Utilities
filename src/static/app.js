@@ -1671,12 +1671,16 @@
         loadFiles();
     }
 
-    function showToast(msg, isError = false) {
+    function showToast(msg, isError = false, kind = '') {
         const t = document.getElementById('toast');
         const icon = t ? t.querySelector('.toast-icon') : null;
         document.getElementById('toastMsg').innerText = msg;
-        if (t) t.classList.toggle('error', !!isError);
-        if (icon) icon.textContent = isError ? '!' : 'OK';
+        const resolved = (kind || (isError ? 'error' : 'success')).toLowerCase();
+        if (t) {
+            t.classList.toggle('error', resolved === 'error');
+            t.classList.toggle('neutral', resolved === 'neutral');
+        }
+        if (icon) icon.textContent = resolved === 'error' ? '!' : (resolved === 'neutral' ? '×' : '✓');
         t.classList.add('visible');
         setTimeout(() => t.classList.remove('visible'), 3000);
     }
@@ -1938,7 +1942,7 @@
             title: 'Choose Target Folder',
             subtitle: 'Select where converted files should be saved.',
             defaultDir: existing,
-            onCancel: () => showToast('Cancelled'),
+            onCancel: () => showToast('Cancelled', false, 'neutral'),
             onSubmit: (dir) => { startConversionWithOutputDir(dir); }
         });
     }
@@ -2136,7 +2140,7 @@
             title: 'Choose Target Folder',
             subtitle: 'Select where generated .ftlv files should be saved.',
             defaultDir: existing,
-            onCancel: () => showToast('Cancelled'),
+            onCancel: () => showToast('Cancelled', false, 'neutral'),
             onSubmit: (dir) => { startMp4FtlvConversionWithOutputDir(dir); }
         });
     }

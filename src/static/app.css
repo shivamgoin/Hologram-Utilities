@@ -669,6 +669,10 @@
             border-color: rgba(239, 68, 68, 0.6);
             background: #2a1520;
         }
+        .toast.neutral {
+            border-color: rgba(148, 163, 184, 0.35);
+            background: rgba(148, 163, 184, 0.08);
+        }
         .toast.visible {
             transform: translateY(0);
             opacity: 1;
@@ -679,6 +683,9 @@
         }
         .toast.error .toast-icon {
             color: #fecaca;
+        }
+        .toast.neutral .toast-icon {
+            color: var(--text-dim);
         }
 
         /* Modal */
